@@ -1,0 +1,103 @@
+﻿<Modeler>
+<!--  Это файл, который должен отражать Кросс-поход 2010 г. -->
+<!-- 
+	Grade  0 - класс Б, 1 - класс Б+, 2 класс А 
+	Старт 1 дня - синхронный в кол-во каналов 1 этапа. Случайное перемешивание внутри класса.
+	Старт 2 дня - парный (А+Б) по результатам 1 дня.
+-->
+	<Teams>
+		<Team Name="Б 0" Members="5" Grade="0" Smartness="1.0857" />
+		<Team Name="Б 1" Members="5" Grade="0" Smartness="1.0013" />
+		<Team Name="Б 2" Members="5" Grade="0" Smartness="1.0943" />
+		<Team Name="Б 3" Members="5" Grade="0" Smartness="0.9729" />
+		<Team Name="Б 4" Members="5" Grade="0" Smartness="0.7261" />
+		<Team Name="Б 5" Members="5" Grade="0" Smartness="1.1832" />
+		<Team Name="Б 6" Members="5" Grade="0" Smartness="1.0622" />
+		<Team Name="Б 7" Members="5" Grade="0" Smartness="1.0485" />
+		<Team Name="Б 8" Members="5" Grade="0" Smartness="1.0691" />
+		<Team Name="Б 9" Members="5" Grade="0" Smartness="0.6637" />
+		<Team Name="Б A" Members="5" Grade="0" Smartness="1.0095" />
+		<Team Name="Б B" Members="5" Grade="0" Smartness="1.0038" />
+		<Team Name="Б C" Members="5" Grade="0" Smartness="1.0503" />
+		<Team Name="Б D" Members="5" Grade="0" Smartness="0.9925" />
+		<Team Name="Б E" Members="5" Grade="0" Smartness="1.1702" />
+		<Team Name="Б F" Members="5" Grade="0" Smartness="1.1047" />
+	</Teams>
+<!-- 
+	Должны быть этапы с названиями Старт1 Старт2
+
+	PType 		тип этапа, возможные значения Start, Tech, Pass, Finish, значение по умолчанию Tech
+	Channels 	число каналов, 0 - без ограничений
+	Sigma 		нормированное стандартное отклонение, значение по умолчанию 0.2 
+-->
+	<Phases>
+		<Phase Name="Старт1" Channels="2" PType="Start">
+      			<Times Min="5" Mean="10" Max="20" Sigma="0.1"/>
+		</Phase>
+		<Phase Name="Перегон1 - 0.5 км" Channels="0" PType="Pass">
+      			<Times Min="1" Mean="30" Max="0"/>
+		</Phase>
+		<Phase Name="Связки" Channels="4">
+      			<Times Min="1" Mean="45" Max="0" Sigma="0.32"/>
+		</Phase>
+		<Phase Name="Перегон2 - 4.5 км, 1КП" Channels="0" PType="Pass">
+      			<Times Min="1" Mean="97" Max="0"/>
+		</Phase>
+		<Phase Name="Инд. Техника" Channels="2">
+      			<Times Min="1" Mean="13" Max="0" Sigma="0.32"/>
+		</Phase>
+		<Phase Name="Перегон3 - 3.8 км, 1КП" Channels="0" PType="Pass">
+      			<Times Min="0" Mean="110" Max="0" Sigma="0.14"/>
+		</Phase>
+		<Phase Name="Бревно" Channels="4">
+      			<Times Min="1" Mean="37" Max="0"/>
+		</Phase>
+		<Phase Name="Перегон4 - 3 км, 1КП" Channels="0" PType="Pass">
+      			<Times Min="0" Mean="124" Max="0" Sigma="0.387"/>
+		</Phase>
+		<Phase Name="Медицина Б" Channels="4">
+      			<Times Min="1" Mean="35" Max="0" Sigma="0.17"/>
+		</Phase>
+		<Phase Name="Транспортировка Б" Channels="4">
+      			<Times Min="1" Mean="39" Max="0" Sigma="0.33"/>
+		</Phase>
+		<Phase Name="Перегон 5 - 6.5 км, 3 КП" Channels="0" PType="Pass">
+      			<Times Min="1" Mean="170" Max="0" Sigma="0.33"/>
+		</Phase>
+		<Phase Name="Бивак" Channels="4" PType="Finish">
+      			<Times Min="10" Mean="20" Max="0"/>
+		</Phase>
+		<Phase Name="Старт2" Channels="2"  PType="Start">
+      			<Times Min="2" Mean="10" Max="40" />
+		</Phase>
+		<Phase Name="Финиш" Channels="0" PType="Finish">
+			<Times Min="1" Mean="1" Max="0"/>
+		</Phase>
+
+	</Phases>
+	<Links>
+		<Link Grade="0">
+			<Sequence>
+				<string>Старт1</string>
+				<string>Перегон1 - 0.5 км</string>
+				<string>Связки</string>
+				<string>Перегон2 - 4.5 км, 1КП</string>
+				<string>Инд. Техника</string>
+				<string>Перегон3 - 3.8 км, 1КП</string>
+				<string>Бревно</string>
+				<string>Перегон4 - 3 км, 1КП</string>
+				<string>Медицина Б</string>
+				<string>Транспортировка Б</string>
+				<string>Перегон 5 - 6.5 км, 3 КП</string>
+				<string>Бивак</string>
+			</Sequence>
+		</Link>
+		<Link Grade="0">
+			<Sequence>
+				<string>Старт2</string>
+				<string>Финиш</string>
+			</Sequence>
+		</Link>
+
+	</Links>
+</Modeler>
