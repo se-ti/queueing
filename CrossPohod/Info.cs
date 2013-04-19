@@ -56,6 +56,9 @@ namespace CrossPohod
 		public TimeSpan Total = TimeSpan.Zero;
 		public int Num 	{get; protected set;}
 
+		static double Part = 0.95;
+
+		protected  List<TimeSpan> all = new List<TimeSpan>();
 
 		public void Add(TimeSpan span)
 		{
@@ -66,6 +69,8 @@ namespace CrossPohod
 
 			Total += span;
 			Num++;
+
+			all.Add(span);
 		}
 
 		public TimeSpan Mean 
@@ -73,11 +78,30 @@ namespace CrossPohod
 			get { return new TimeSpan(0, 0, 0, Num != 0 ? (int)(Total.TotalSeconds / Num) : 0); }
 		}
 
+		protected int Step
+		{
+			get { return Convert.ToInt32(all.Count * (1 - Part) / 2 );  }
+		}
+		
+		public TimeSpan Min95
+		{ 
+			get { return all.OrderBy(i => i.Ticks).ElementAt(Step); }		
+		}
+		public TimeSpan Max95
+		{
+			get { return all.OrderByDescending(i => i.Ticks).ElementAt(Step); }
+		}
+
+		public static string Header()
+		{
+			return "min\tm95\tM95\tMax\tсредн";
+		}
+
 		public String Print()
 		{
 			if (Num == 0)
-				return "0\t0\t0";
-			return string.Format("{0}\t{1}\t{2}", Min, Max, Mean);
+				return "0\t0\t0\t0\t0";
+			return string.Format("{0}\t{1}\t{2}\t{3}\t{4}", Min, Min95, Max95, Max, Mean);
 		}
 	}
 }

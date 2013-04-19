@@ -16,6 +16,7 @@ namespace CrossPohod
 		Finish
 	}
 
+	#region serialization classes
 	[Serializable]
 	public class PhaseParam
 	{
@@ -84,6 +85,7 @@ namespace CrossPohod
 		public PhaseType PType = PhaseType.Tech;
 	}
 
+	#endregion
 
 	public class Node: Phase
 	{
@@ -342,12 +344,11 @@ namespace CrossPohod
 
 		public static string PrintHeader()
 		{
-			return "Команд\tмакс заг\tзанят с\tпо\tработа мин\tмакс\tсредн\t отсечек\tмин\tмакс\tсредн\tснятий";
+			return String.Format("Команд\tмакс заг\tзанят с\tпо\tработа {0}\t отсечек\t{0}\tснятий", TimeStat.Header());
 		}
 		public string PrintStat(string name, int n)
 		{
 			return String.Format("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\t{8}", name, Teams / n, MaxLoad, Start.TimeOfDay, End.TimeOfDay, Time.Print(), Div(Wait.Num, n), Wait.Print(), Div(Rejects, n));
-			//return String.Format("Команд {0}, макс загрузка {1}, занят с {2} по {3}, работа: {4}, {5} отсечек {6}, снятий по КВ {7}", Teams/n, MaxLoad, Start.TimeOfDay, End.TimeOfDay, Time.Print(), Wait.Num, Wait.Print(), decimal.Round(decimal.Divide(Rejects, n), 2));
 		}
 
 		private static decimal Div(int n, int m)
