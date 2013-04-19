@@ -292,11 +292,16 @@ namespace CrossPohod
 			return new TimeSpan(0, Convert.ToInt32(minutes), 0);
 		}
 
+		/*!	@return	случайное число с нормальным (Гауссовым) распределением
+		 * @param afExpected -- матожидание
+		 * @param afDeviation -- нормированное среднекватратичное отклонение
+		 * 
+		 * 	На основании центральной предельной теоремы имеем в NewRandom случайную величину 
+		 * 	с распределением, близким к нормальному с параметрами M=0, Sigma = 1
+		 * 	12 выбрано ради получения Sigma = 1.
+		 * */
 		public static double GetNormalDistibutedRandom(Random r, double afExpected, double afDeviation)
 		{
-			// Возвращает случайное число с нормальным (Гауссовым) распределением
-			// afExpected -- матожидание
-			// afDeviation -- нормированное среднекватратичное отклонение
 			int i;
 			const int N = 12;
 			double NewRandom = 0.0;
@@ -305,10 +310,6 @@ namespace CrossPohod
 				NewRandom += r.Next(0, 100000) / 100000.0;
 			}
 			NewRandom -= N / 2;
-
-			// На основании центральной предельной теоремы имеем в NewRandom случайную величину 
-			// с респределением, близким к нормальному с параметрами M=0, Sigma = 1
-			// 12 выбрано ради получения Sigma = 1.
 
 			return NewRandom * afDeviation * afExpected + afExpected;
 		}
