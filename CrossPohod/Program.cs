@@ -67,6 +67,9 @@ namespace CrossPohod
 					sw.WriteLine(t.PrintStat());
 					t.ClearStat();
 				}
+				foreach (var n in mod.Nodes.Values)
+					n.EndOfTurn();
+
 				sw.Flush();
 			}
 

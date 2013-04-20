@@ -49,6 +49,23 @@ namespace CrossPohod
 		}
 	}
 
+	public class PhaseInfo
+	{
+		public int MaxLoad;
+		public DateTime Start;
+		public DateTime End;
+
+		public PhaseInfo()
+		{ }
+
+		public PhaseInfo(int maxLoad, DateTime start, DateTime end)
+		{
+			MaxLoad = maxLoad;
+			Start = start;
+			End = end;
+		}
+	}
+
 	public class TimeStat
 	{
 		public TimeSpan Min = TimeSpan.MaxValue;

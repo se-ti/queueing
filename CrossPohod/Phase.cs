@@ -111,7 +111,8 @@ namespace CrossPohod
 		protected DateTime m_start = DateTime.MaxValue;
 		protected DateTime m_end = DateTime.MinValue;
 
-		protected List<PhaseTeamInfo> Info = new List<PhaseTeamInfo>(); 
+		protected List<PhaseInfo> PInfo = new List<PhaseInfo>();
+		protected List<PhaseTeamInfo> Info = new List<PhaseTeamInfo>();
 
 		protected void CheckStart(DateTime time)
 		{
@@ -206,9 +207,21 @@ namespace CrossPohod
 			CheckStart(time);
 		}
 
+		public void EndOfTurn()
+		{
+			if (m_maxLoad == 0)	// nothing happened since last call;
+				return; 
+
+			PInfo.Add(new PhaseInfo(m_maxLoad, m_start, m_end));
+			m_maxLoad = 0;
+			m_end = DateTime.MinValue;
+			m_start = DateTime.MaxValue;
+		}
+
 		public PhaseStat GetStat()
 		{
-			return new PhaseStat(Info, m_start, m_end, m_maxLoad);
+			EndOfTurn();
+			return new PhaseStat(Info, PInfo);
 		}
 
 		public static string PrintHeader()
@@ -326,11 +339,11 @@ namespace CrossPohod
 		int MaxLoad = 0;
 		int Teams = 0;
 
-		public PhaseStat(List<PhaseTeamInfo> info, DateTime start, DateTime end, int maxLoad)
+		public PhaseStat(List<PhaseTeamInfo> info, List<PhaseInfo> pInfo)
 		{
-			Start = start;
-			End = end;
-			MaxLoad = maxLoad;
+			Start = pInfo.Min(pi => pi.Start);
+			End = pInfo.Max(pi => pi.End);
+			MaxLoad = pInfo.Max(pi => pi.MaxLoad);
 
 			foreach (var i in info)
 			{
