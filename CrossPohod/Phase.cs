@@ -209,7 +209,7 @@ namespace CrossPohod
 
 		public void EndOfTurn()
 		{
-			if (m_maxLoad == 0)	// nothing happened since last call;
+			if (m_maxLoad == 0 && m_start == DateTime.MaxValue)	// nothing happened since last call;
 				return; 
 
 			PInfo.Add(new PhaseInfo(m_maxLoad, m_start, m_end));
@@ -339,8 +339,11 @@ namespace CrossPohod
 		int MaxLoad = 0;
 		int Teams = 0;
 
+		List<PhaseInfo> PInfo = null;
+
 		public PhaseStat(List<PhaseTeamInfo> info, List<PhaseInfo> pInfo)
 		{
+			PInfo = pInfo;
 			Start = pInfo.Min(pi => pi.Start);
 			End = pInfo.Max(pi => pi.End);
 			MaxLoad = pInfo.Max(pi => pi.MaxLoad);
@@ -358,11 +361,17 @@ namespace CrossPohod
 
 		public static string PrintHeader()
 		{
-			return String.Format("Команд\tмакс заг\tзанят с\tпо\tработа {0}\t отсечек\t{0}\tснятий", TimeStat.Header());
+			return String.Format("Команд\tмакс заг\t95% макс заг\tзанят с\tс95\tпо95\tпо\tработа {0}\t отсечек\t{0}\tснятий", TimeStat.Header());
 		}
 		public string PrintStat(string name, int n)
 		{
-			return String.Format("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\t{8}", name, Teams / n, MaxLoad, Start.TimeOfDay, End.TimeOfDay, Time.Print(), Div(Wait.Num, n), Wait.Print(), Div(Rejects, n));
+			double level = 0.95;
+
+			Stat<PhaseInfo, int> load = new Stat<PhaseInfo, int>(PInfo, p => p.MaxLoad);
+			Stat<PhaseInfo, long> start = new Stat<PhaseInfo, long>(PInfo, p => p.Start.Ticks);
+			Stat<PhaseInfo, long> end = new Stat<PhaseInfo, long>(PInfo, p => p.End.Ticks);
+
+			return String.Format("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\t{8}\t{9}\t{10}\t{11}", name, Teams / n, MaxLoad, load.Max(level).MaxLoad, Start.TimeOfDay, start.Min(level).Start.TimeOfDay, end.Max(level).End.TimeOfDay, End.TimeOfDay, Time.Print(level), Div(Wait.Num, n), Wait.Print(level), Div(Rejects, n));
 		}
 
 		private static decimal Div(int n, int m)

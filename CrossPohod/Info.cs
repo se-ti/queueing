@@ -73,8 +73,6 @@ namespace CrossPohod
 		public TimeSpan Total = TimeSpan.Zero;
 		public int Num 	{get; protected set;}
 
-		static double Part = 0.95;
-
 		protected  List<TimeSpan> all = new List<TimeSpan>();
 
 		public void Add(TimeSpan span)
@@ -95,30 +93,76 @@ namespace CrossPohod
 			get { return new TimeSpan(0, 0, 0, Num != 0 ? (int)(Total.TotalSeconds / Num) : 0); }
 		}
 
-		protected int Step
-		{
-			get { return Convert.ToInt32(all.Count * (1 - Part) / 2 );  }
-		}
-		
-		public TimeSpan Min95
-		{ 
-			get { return all.OrderBy(i => i.Ticks).ElementAt(Step); }		
-		}
-		public TimeSpan Max95
-		{
-			get { return all.OrderByDescending(i => i.Ticks).ElementAt(Step); }
-		}
-
 		public static string Header()
 		{
 			return "min\tm95\tM95\tMax\tсредн";
 		}
 
-		public String Print()
+		public String Print(double level)
 		{
 			if (Num == 0)
 				return "0\t0\t0\t0\t0";
-			return string.Format("{0}\t{1}\t{2}\t{3}\t{4}", Min, Min95, Max95, Max, Mean);
+
+			Stat<TimeSpan, long> stat = new Stat<TimeSpan, long>(all, ts => ts.Ticks);
+			return string.Format("{0}\t{1}\t{2}\t{3}\t{4}", Min, stat.Min(level), stat.Max(level), Max, Mean);
+		}
+
+	}
+
+	public class Stat<T, Y> where T: new()
+	{
+		protected T[] m_sorted = null;
+		//protected Func<T, Y> m_accessor = null;
+		
+		public Stat(IEnumerable<T> seq, Func<T, Y> accessor)
+		{
+			//m_accessor = accessor;
+			m_sorted = seq.OrderBy(l => accessor(l)).ToArray();
+		}
+
+		protected int Step(double level)
+		{
+			return Convert.ToInt32(m_sorted.Length * (1 - level));
+		}
+
+		public T Min()
+		{
+			return m_sorted[0];
+		}
+
+		public T Min(double level)
+		{
+			if (level < 0 || level > 1)
+				return new T();
+
+			return m_sorted[Step(level)];
+		}
+
+		public T Max()
+		{
+			return m_sorted[m_sorted.Length - 1];
+		}
+
+		public T Max(double level)
+		{
+			if (level < 0 || level > 1)
+				return new T();
+
+			return m_sorted[m_sorted.Length - 1 - Step(level)];
+		}
+
+		public void MinMax(double part, out T min, out T max)
+		{
+			if (part < 0 || part > 1)
+			{
+				min = new T();
+				max = new T();
+				return;
+			}
+
+			int step = Step(part);
+			min = m_sorted[step];
+			max = m_sorted[m_sorted.Length - 1 - step];
 		}
 	}
 }
