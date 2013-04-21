@@ -103,21 +103,27 @@ namespace CrossPohod
 			if (Num == 0)
 				return "0\t0\t0\t0\t0";
 
-			Stat<TimeSpan, long> stat = new Stat<TimeSpan, long>(all, ts => ts.Ticks);
+			Stat<TimeSpan, TimeSpan, long> stat = new Stat<TimeSpan, TimeSpan, long>(all, ts => ts, ts => ts.Ticks);
 			return string.Format("{0}\t{1}\t{2}\t{3}\t{4}", Min, stat.Min(level), stat.Max(level), Max, Mean);
 		}
 
 	}
 
-	public class Stat<T, Y> where T: new()
+	/// <summary>
+	/// класс для вычисления квантилей на списках
+	/// </summary>
+	/// <typeparam name="Elem">тип элемента списка</typeparam>
+	/// <typeparam name="Val">тип интересующеего значения</typeparam>
+	/// <typeparam name="SortBy">тип значения, по которому сортировать</typeparam>
+	public class Stat<Elem, Val, SortBy> where Elem: new()
 	{
-		protected T[] m_sorted = null;
-		//protected Func<T, Y> m_accessor = null;
+		protected Elem[] m_sorted = null;
+		protected Func<Elem, Val> m_accessor = null;
 		
-		public Stat(IEnumerable<T> seq, Func<T, Y> accessor)
+		public Stat(IEnumerable<Elem> seq, Func<Elem, Val> acc, Func<Elem, SortBy> sorter)
 		{
-			//m_accessor = accessor;
-			m_sorted = seq.OrderBy(l => accessor(l)).ToArray();
+			m_accessor = acc;
+			m_sorted = seq.OrderBy(l => sorter(l)).ToArray();
 		}
 
 		protected int Step(double level)
@@ -125,44 +131,44 @@ namespace CrossPohod
 			return Convert.ToInt32(m_sorted.Length * (1 - level));
 		}
 
-		public T Min()
+		public Val Min()
 		{
-			return m_sorted[0];
+			return m_accessor(m_sorted[0]);
 		}
 
-		public T Min(double level)
-		{
-			if (level < 0 || level > 1)
-				return new T();
-
-			return m_sorted[Step(level)];
-		}
-
-		public T Max()
-		{
-			return m_sorted[m_sorted.Length - 1];
-		}
-
-		public T Max(double level)
+		public Val Min(double level)
 		{
 			if (level < 0 || level > 1)
-				return new T();
+				return m_accessor(new Elem());
 
-			return m_sorted[m_sorted.Length - 1 - Step(level)];
+			return m_accessor(m_sorted[Step(level)]);
 		}
 
-		public void MinMax(double part, out T min, out T max)
+		public Val Max()
+		{
+			return m_accessor(m_sorted[m_sorted.Length - 1]);
+		}
+
+		public Val Max(double level)
+		{
+			if (level < 0 || level > 1)
+				return m_accessor(new Elem());
+
+			return m_accessor(m_sorted[m_sorted.Length - 1 - Step(level)]);
+		}
+
+		public void MinMax(double part, out Val min, out Val max)
 		{
 			if (part < 0 || part > 1)
 			{
-				min = new T();
-				max = new T();
+				min = m_accessor(new Elem());
+				max = m_accessor(new Elem());
 				return;
 			}
 
 			int step = Step(part);
-			min = m_sorted[step];
-			max = m_sorted[m_sorted.Length - 1 - step];
+			min = m_accessor(m_sorted[step]);
+			max = m_accessor(m_sorted[m_sorted.Length - 1 - step]);
 		}
 	}
 }

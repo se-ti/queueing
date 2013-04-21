@@ -285,14 +285,12 @@ namespace CrossPohod
 			tw.WriteLine();
 		}
 
+		/// <param name="r">генератор равномерно распределенных случайных чисел</param>
+		/// <param name="t">командаб t.Smartness -- коэффициент быстроходности / тормознутости t.Members -- число человек</param>
+		/// <returns></returns>
 		protected TimeSpan NextMoment(Random r, Team t)
 		{
-			//t.Smartness -- коэффициент быстроходности / тормознутости
-			//t.Members -- число человек
-			//time	-- дольше идем -- больше устаем
-
 			// this.Times -- характеристики этапа Min, Mean, Max, Sigma
-			// this.PType -- тип этапа (тех / перегон)
 
 			double minutes = GetNormalDistibutedRandom(r, Times.Mean.TotalMinutes * t.Smartness, Times.Sigma);
 
@@ -305,14 +303,15 @@ namespace CrossPohod
 			return new TimeSpan(0, Convert.ToInt32(minutes), 0);
 		}
 
-		/*!	@return	случайное число с нормальным (Гауссовым) распределением
-		 * @param afExpected -- матожидание
-		 * @param afDeviation -- нормированное среднекватратичное отклонение
-		 * 
-		 * 	На основании центральной предельной теоремы имеем в NewRandom случайную величину 
-		 * 	с распределением, близким к нормальному с параметрами M=0, Sigma = 1
-		 * 	12 выбрано ради получения Sigma = 1.
-		 * */
+		/// <summary>
+		/// На основании центральной предельной теоремы имеем в NewRandom случайную величину 
+		///	с распределением, близким к нормальному с параметрами M=0, Sigma = 1
+		///	12 выбрано ради получения Sigma = 1. 
+		/// </summary>
+		/// <param name="r">генератор равномерно распределенных случайных чисел</param>
+		/// <param name="afExpected">матожидание</param>
+		/// <param name="afDeviation">нормированное среднекватратичное отклонение</param>
+		/// <returns>случайное число с нормальным (Гауссовым) распределением</returns>
 		public static double GetNormalDistibutedRandom(Random r, double afExpected, double afDeviation)
 		{
 			int i;
@@ -330,23 +329,16 @@ namespace CrossPohod
 
 	public class PhaseStat
 	{
-		DateTime Start = DateTime.MaxValue;
-		DateTime End = DateTime.MinValue;
+		int Teams = 0;
 		int Rejects = 0;
-
 		TimeStat Time = new TimeStat();
 		TimeStat Wait = new TimeStat();
-		int MaxLoad = 0;
-		int Teams = 0;
 
 		List<PhaseInfo> PInfo = null;
 
 		public PhaseStat(List<PhaseTeamInfo> info, List<PhaseInfo> pInfo)
 		{
 			PInfo = pInfo;
-			Start = pInfo.Min(pi => pi.Start);
-			End = pInfo.Max(pi => pi.End);
-			MaxLoad = pInfo.Max(pi => pi.MaxLoad);
 
 			foreach (var i in info)
 			{
@@ -367,11 +359,11 @@ namespace CrossPohod
 		{
 			double level = 0.95;
 
-			Stat<PhaseInfo, int> load = new Stat<PhaseInfo, int>(PInfo, p => p.MaxLoad);
-			Stat<PhaseInfo, long> start = new Stat<PhaseInfo, long>(PInfo, p => p.Start.Ticks);
-			Stat<PhaseInfo, long> end = new Stat<PhaseInfo, long>(PInfo, p => p.End.Ticks);
+			Stat<PhaseInfo, int, int> load = new Stat<PhaseInfo, int, int>(PInfo, p => p.MaxLoad, p => p.MaxLoad);
+			Stat<PhaseInfo, TimeSpan, long> start = new Stat<PhaseInfo, TimeSpan, long>(PInfo, p => p.Start.TimeOfDay, p => p.Start.Ticks);
+			Stat<PhaseInfo, TimeSpan, long> end   = new Stat<PhaseInfo, TimeSpan, long>(PInfo, p => p.End.TimeOfDay, p => p.End.Ticks);
 
-			return String.Format("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\t{8}\t{9}\t{10}\t{11}", name, Teams / n, MaxLoad, load.Max(level).MaxLoad, Start.TimeOfDay, start.Min(level).Start.TimeOfDay, end.Max(level).End.TimeOfDay, End.TimeOfDay, Time.Print(level), Div(Wait.Num, n), Wait.Print(level), Div(Rejects, n));
+			return String.Format("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\t{8}\t{9}\t{10}\t{11}", name, Teams / n, load.Max(), load.Max(level), start.Min(), start.Min(level), end.Max(level), end.Max(), Time.Print(level), Div(Wait.Num, n), Wait.Print(level), Div(Rejects, n));
 		}
 
 		private static decimal Div(int n, int m)
