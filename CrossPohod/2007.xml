@@ -1,0 +1,237 @@
+﻿<Modeler>
+<!-- 
+	Grade  0 - класс Б, 1 - класс Б+, 2 класс А 
+	Старт 1 дня - синхронный в кол-во каналов 1 этапа. Случайное перемешивание внутри класса.
+	Старт 2 дня - парный (А+Б) по результатам 1 дня.
+-->
+	<Teams>
+		<Team Name="Б 1" Members="5" Grade="0" Smartness="1" />
+		<Team Name="Б 2" Members="5" Grade="0" Smartness="1.1"/>
+		<Team Name="Б 3" Members="5" Grade="0" Smartness="1.1"/>
+		<Team Name="Б 4" Members="5" Grade="0" Smartness="1.1"/>
+		<Team Name="Б 5" Members="5" Grade="0" Smartness="1.1"/>
+		<Team Name="Б 6" Members="5" Grade="0" Smartness="0.8"/>
+		<Team Name="Б 7" Members="5" Grade="0" Smartness="1" />
+		<Team Name="Б 8" Members="5" Grade="0" Smartness="1.1"/>
+		<Team Name="Б 9" Members="5" Grade="0" Smartness="1.1"/>
+		<Team Name="Б 10" Members="5" Grade="0" Smartness="1.1"/>
+		<Team Name="Б 11" Members="5" Grade="0" Smartness="1.1"/>
+		<Team Name="Б 12" Members="5" Grade="0" Smartness="0.8"/>
+		<Team Name="Б 13" Members="5" Grade="0" Smartness="0.8"/>
+
+		<Team Name="А 0" Members="5" Grade="2" Smartness="1"/>
+		<Team Name="А 1" Members="5" Grade="2" Smartness="1.1"/>
+		<Team Name="А 2" Members="5" Grade="2" Smartness="1.2"/>
+		<Team Name="А 3" Members="5" Grade="2" Smartness="0.9"/>
+		<Team Name="А 4" Members="5" Grade="2" Smartness="0.95"/>
+		<Team Name="А 5" Members="5" Grade="2" Smartness="1.05"/>
+		<Team Name="А 6" Members="5" Grade="2" Smartness="1.05"/>
+	</Teams>
+<!-- 
+	Должны быть этапы с названиями Старт1 Старт2
+
+	PType 		тип этапа, возможные значения Start, Tech, Pass, Finish, значение по умолчанию Tech
+	Channels 	число каналов, 0 - без ограничений
+	Sigma 		нормированное стандартное отклонение, значение по умолчанию 0.2 
+-->
+	<Phases>
+		<Phase Name="Старт1" Channels="2" PType="Start">
+      			<Times Min="1" Mean="7" Max="30" Sigma="0.01"/>
+		</Phase>
+		<Phase Name="Перегон1" Channels="0" PType="Pass">
+      			<Times Min="5" Mean="10" Max="0"/>
+		</Phase>
+		<Phase Name="Брод" Channels="2">
+      			<Times Min="10" Mean="30" Max="45" Sigma="0.375"/>
+		</Phase>
+		<Phase Name="Перегон2Б" Channels="0" PType="Pass">
+      			<Times Min="15" Mean="40" Max="0"/>
+		</Phase>
+		<Phase Name="Перегон2А" Channels="0" PType="Pass">
+      			<Times Min="20" Mean="40" Max="60"/>
+		</Phase>
+		<Phase Name="Закрытый ледник" Channels="4">
+      			<Times Min="10" Mean="20" Max="40"/>
+		</Phase>
+		<Phase Name="Перегон3Б" Channels="0" PType="Pass">
+      			<Times Min="60" Mean="90" Max="0"/>
+		</Phase>
+		<Phase Name="Бревно" Channels="3">
+      			<Times Min="10" Mean="20" Max="40"/>
+		</Phase>
+		<Phase Name="Перегон4Б" Channels="0" PType="Pass">
+      			<Times Min="60" Mean="90" Max="0"/>
+		</Phase>
+		<Phase Name="Медицина" Channels="6">
+      			<Times Min="10" Mean="20" Max="40"/>
+		</Phase>
+		<Phase Name="Перегон5Б" Channels="0" PType="Pass">
+      			<Times Min="60" Mean="90" Max="0"/>
+		</Phase>
+		<Phase Name="Транспортировка Б" Channels="4">
+      			<Times Min="10" Mean="20" Max="40"/>
+		</Phase>
+		<Phase Name="Перегон6Б" Channels="0" PType="Pass">
+      			<Times Min="60" Mean="90" Max="0"/>
+		</Phase>
+
+		<Phase Name="Перегон3А" Channels="0" PType="Pass">
+      			<Times Min="20" Mean="40" Max="60"/>
+		</Phase>
+
+		<Phase Name="Транспортировка А" Channels="3">
+      			<Times Min="26" Mean="54" Max="60"/>
+		</Phase>
+		<Phase Name="Перегон4А" Channels="0" PType="Pass">
+      			<Times Min="20" Mean="40" Max="60"/>
+		</Phase>
+		<Phase Name="Протяженный А" Channels="3">
+      			<Times Min="20" Mean="40" Max="60"/>
+		</Phase>
+		<Phase Name="Перегон5А" Channels="0" PType="Pass">
+      			<Times Min="20" Mean="40" Max="60"/>
+		</Phase>
+
+		<Phase Name="Бивак" Channels="0" PType="Finish">
+      			<Times Min="60" Mean="90" Max="0"/>
+		</Phase>
+
+
+
+		<Phase Name="Старт2" Channels="2"  PType="Start">
+      			<Times Min="1" Mean="1" Max="60" Sigma="0.01"/>
+		</Phase>
+		<Phase Name="Перегон 01Б" Channels="0" PType="Pass">
+			<Times Min="45" Mean="80" Max="0"/>
+		</Phase>
+		<Phase Name="Скалы" Channels="2">
+			<Times Min="5" Mean="14" Max="25"/>
+		</Phase>
+		<Phase Name="Перегон 02Б" Channels="0" PType="Pass">
+			<Times Min="5" Mean="15" Max="0"/>
+		</Phase>
+		<Phase Name="Дюльфер" Channels="3">
+			<Times Min="15" Mean="25" Max="65"/>
+		</Phase>
+		<Phase Name="Перегон 03Б" Channels="0" PType="Pass">
+			<Times Min="3" Mean="7" Max="0"/>
+		</Phase>
+		<Phase Name="Подъем" Channels="2" >
+			<Times Min="15" Mean="35" Max="60"/>
+		</Phase>
+		<Phase Name="Перегон 04Б" Channels="0" PType="Pass">
+			<Times Min="5" Mean="15" Max="25"/>
+		</Phase>
+		<Phase Name="Легкий" Channels="2">
+			<Times Min="10" Mean="25" Max="40"/>
+		</Phase>
+		<Phase Name="Перегон 05Б" Channels="0" PType="Pass">
+			<Times Min="7" Mean="12" Max="0"/>
+		</Phase>
+
+
+
+		<Phase Name="Перегон 01А" Channels="0" PType="Pass">
+			<Times Min="50" Mean="80" Max="0"/>
+		</Phase>
+		<Phase Name="Лед А" Channels="3">
+			<Times Min="15" Mean="35" Max="60"/>
+		</Phase>
+		<Phase Name="Перегон 02А" Channels="0" PType="Pass">
+			<Times Min="7" Mean="12" Max="0"/>
+		</Phase>
+		<Phase Name="Скалы А" Channels="2">
+			<Times Min="15" Mean="35" Max="60"/>
+		</Phase>
+		<Phase Name="Перегон 03А" Channels="0" PType="Pass">
+			<Times Min="7" Mean="15" Max="0"/>
+		</Phase>
+		<Phase Name="Спуск тяжелого А" Channels="2">
+			<Times Min="15" Mean="35" Max="55"/>
+		</Phase>
+		<Phase Name="Перегон 04А" Channels="0" PType="Pass">
+			<Times Min="7" Mean="15" Max="0"/>
+		</Phase>
+		<Phase Name="Подъем из трещины А" Channels="2">
+			<Times Min="15" Mean="25" Max="40"/>
+		</Phase>
+		<Phase Name="Перегон 05А" Channels="0" PType="Pass">
+			<Times Min="5" Mean="12" Max="0"/>
+		</Phase>
+
+		<Phase Name="Финиш" Channels="0" PType="Finish">
+			<Times Min="1" Mean="1" Max="0"/>
+		</Phase>
+
+<!--
+		<Phase Name="Перегон 1" Channels="3" PType="Tech">
+			<Times Min="10" Mean="10" Max="100" Sigma="0.175"/>
+		</Phase>
+-->
+	</Phases>
+	<Links>
+		<Link Grade="0">
+			<Sequence>
+				<string>Старт1</string>
+				<string>Перегон1</string>
+				<string>Брод</string>
+				<string>Перегон2Б</string>
+				<string>Закрытый ледник</string>
+				<string>Перегон3Б</string>
+				<string>Бревно</string>
+				<string>Перегон4Б</string>
+				<string>Медицина</string>
+				<string>Перегон5Б</string>
+				<string>Транспортировка Б</string>
+				<string>Перегон6Б</string>
+				<string>Бивак</string>
+			</Sequence>
+		</Link>
+		<Link Grade="0">
+			<Sequence>
+				<string>Старт2</string>
+				<string>Перегон 01Б</string>
+				<string>Скалы</string>
+				<string>Перегон 02Б</string>
+				<string>Дюльфер</string>
+				<string>Перегон 03Б</string>
+				<string>Подъем</string>
+				<string>Перегон 04Б</string>
+				<string>Легкий</string>
+				<string>Перегон 05Б</string>
+				<string>Финиш</string>
+			</Sequence>
+		</Link>
+
+		<Link Grade="2">
+			<Sequence>
+				<string>Старт1</string>
+				<string>Перегон1</string>
+				<string>Брод</string>
+				<string>Перегон2А</string>
+				<string>Медицина</string>
+				<string>Перегон3А</string>
+				<string>Транспортировка А</string>
+				<string>Перегон4А</string>
+				<string>Протяженный А</string>
+				<string>Перегон5А</string>
+				<string>Бивак</string>
+			</Sequence>
+		</Link>
+		<Link Grade="2">
+			<Sequence>
+				<string>Старт2</string>
+				<string>Перегон 01А</string>
+				<string>Лед А</string>
+				<string>Перегон 02А</string>
+				<string>Скалы А</string>
+				<string>Перегон 03А</string>
+				<string>Спуск тяжелого А</string>
+				<string>Перегон 04А</string>
+				<string>Подъем из трещины А</string>
+				<string>Перегон 05А</string>
+				<string>Финиш</string>
+			</Sequence>
+		</Link>
+	</Links>
+</Modeler>
