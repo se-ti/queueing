@@ -178,7 +178,6 @@ namespace CrossPohod
 			var evt = new CPEvent(this, t, when + dur);
 			Process.Add(evt);
 
-
 			if (evt.Time < When)
 			{
 				m_when = evt.Time;
@@ -359,7 +358,7 @@ namespace CrossPohod
 		{
 			Stat<PhaseInfo, int, int> load = new Stat<PhaseInfo, int, int>(PInfo, p => p.MaxLoad, p => p.MaxLoad);
 			Stat<PhaseInfo, TimeSpan, long> start = new Stat<PhaseInfo, TimeSpan, long>(PInfo, p => p.Start.TimeOfDay, p => p.Start.Ticks);
-			Stat<PhaseInfo, TimeSpan, long> end   = new Stat<PhaseInfo, TimeSpan, long>(PInfo, p => p.End.TimeOfDay, p => p.End.Ticks);
+			Stat<PhaseInfo, TimeSpan, long> end   = new Stat<PhaseInfo, TimeSpan, long>(PInfo, p => p.End.TimeOfDay,   p => p.End.Ticks);
 
 			return String.Format("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\t{8}\t{9}\t{10}\t{11}", name, Teams / n, load.Max(), load.Max(level), start.Min(), start.Min(level), end.Max(level), end.Max(), Time.Print(level), Div(Wait.Num, n), Wait.Print(level), Div(Rejects, n));
 		}

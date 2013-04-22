@@ -9,20 +9,6 @@ using Distance = System.Collections.Generic.Dictionary<string, CrossPohod.Node>;
 
 namespace CrossPohod
 {
-	public class CPEvent
-	{
-		public DateTime Time;
-		public Team Team;
-		public Node Node;
-
-		public CPEvent(Node node, Team team, DateTime time)
-		{
-			Time = time;
-			Team = team;
-			Node = node;
-		}
-	}
-
 	class Program
 	{
 		static void Main(string[] args)

@@ -8,6 +8,20 @@ using System.Xml.Serialization;
 
 namespace CrossPohod
 {
+	public class CPEvent
+	{
+		public DateTime Time;
+		public Team Team;
+		public Node Node;
+
+		public CPEvent(Node node, Team team, DateTime time)
+		{
+			Time = time;
+			Team = team;
+			Node = node;
+		}
+	}
+
 	[Serializable]
 	public class Modeler
 	{
@@ -43,7 +57,7 @@ namespace CrossPohod
 		public bool Unlimited = false;
 
 		[XmlIgnore]
-		public double Level = 0.91;
+		public double Level = 0.95;
 
 		protected Dictionary<string, List<TeamStat>> TeamStat = new Dictionary<string, List<TeamStat>>();
 		protected Dictionary<string, List<PhaseStat>> PhaseStat = new Dictionary<string, List<PhaseStat>>();
@@ -52,7 +66,7 @@ namespace CrossPohod
 		public void RetrieveTeamStat(int day)
 		{
 			foreach (var t in Teams)
-				t.GetStat(day);
+				t.GetStat(day);			
 		}
 
 		public void PhaseStats(TextWriter tw, int num)

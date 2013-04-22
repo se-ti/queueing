@@ -113,7 +113,7 @@ namespace CrossPohod
 	/// класс для вычисления квантилей на списках
 	/// </summary>
 	/// <typeparam name="Elem">тип элемента списка</typeparam>
-	/// <typeparam name="Val">тип интересующеего значения</typeparam>
+	/// <typeparam name="Val">тип интересующего значения</typeparam>
 	/// <typeparam name="SortBy">тип значения, по которому сортировать</typeparam>
 	public class Stat<Elem, Val, SortBy> where Elem: new()
 	{
@@ -157,18 +157,15 @@ namespace CrossPohod
 			return m_accessor(m_sorted[m_sorted.Length - 1 - Step(level)]);
 		}
 
-		public void MinMax(double part, out Val min, out Val max)
+		public void MinMax(double level, out Val min, out Val max)
 		{
-			if (part < 0 || part > 1)
-			{
-				min = m_accessor(new Elem());
-				max = m_accessor(new Elem());
-				return;
-			}
+			min = Min(level);
+			max = Max(level);
+		}
 
-			int step = Step(part);
-			min = m_accessor(m_sorted[step]);
-			max = m_accessor(m_sorted[m_sorted.Length - 1 - step]);
+		public Val Median()
+		{
+			return m_accessor(m_sorted[m_sorted.Length / 2]);
 		}
 	}
 }
