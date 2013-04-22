@@ -11,45 +11,6 @@ namespace CrossPohod
 {
 	class Program
 	{
-
-		public static void ParseParams(string[] args, Modeler mod, out int iter, out TimeSpan start)
-		{
-			iter = 1;
-			start = new TimeSpan(6, 0, 0);
-
-			if (args.Length < 3)
-				return;
-
-			int i = 2;
-			string arg;
-
-			while (i < args.Length)
-			{
-				arg = args[i++].ToLower();
-
-				if ("-unlim" == arg)
-					mod.Unlimited = true;
-				else if ("-s" == arg || "-start" == arg)
-				{
-					if (i >= args.Length)
-						throw new Exception("Нет значения для флага -s");
-					arg = args[i++];
-
-					if (!TimeSpan.TryParse(arg, out start))
-						throw new Exception(String.Format("Не могу прочесть время старта: {0}", arg));
-				}
-				else if ("-h" == arg || "-help" == arg)
-					throw new Exception("");
-				else if (arg.StartsWith("-"))
-					throw new Exception(String.Format("Неизвестный ключ: {0}", arg));
-				else if (i == 2)	// не ключ!
-				{
-					if (!Int32.TryParse(arg, out iter))
-						throw new Exception(String.Format("Не могу прочесть число повторов: {0}", arg));
-				}
-			}
-		}
-
 		static void Main(string[] args)
 		{
 			try
@@ -117,6 +78,44 @@ namespace CrossPohod
 			Console.WriteLine("\nSwitches:");
 			Console.WriteLine("\tunlim\t\tрежим оценки необходимой пропускной способности");
 			Console.WriteLine("\ts start\tначало работы старта 1 дня. Например: -s 6:20");
+		}
+		
+		public static void ParseParams(string[] args, Modeler mod, out int iter, out TimeSpan start)
+		{
+			iter = 1;
+			start = new TimeSpan(6, 0, 0);
+
+			if (args.Length < 3)
+				return;
+
+			int i = 2;
+			string arg;
+
+			while (i < args.Length)
+			{
+				arg = args[i++].ToLower();
+
+				if ("-unlim" == arg)
+					mod.Unlimited = true;
+				else if ("-s" == arg || "-start" == arg)
+				{
+					if (i >= args.Length)
+						throw new Exception("Нет значения для флага -s");
+					arg = args[i++];
+
+					if (!TimeSpan.TryParse(arg, out start))
+						throw new Exception(String.Format("Не могу прочесть время старта: '{0}'", arg));
+				}
+				else if ("-h" == arg || "-help" == arg)
+					throw new Exception("");
+				else if (arg.StartsWith("-"))
+					throw new Exception(String.Format("Неизвестный ключ: '{0}'", arg));
+				else if (i == 2)	// не ключ!
+				{
+					if (!Int32.TryParse(arg, out iter) || iter <= 0)
+						throw new Exception(String.Format("Не могу прочесть число повторов: '{0}'", arg));
+				}
+			}
 		}
 
 		public static void StartDay1(Random r, Node n, List<Team> teams, DateTime start)
