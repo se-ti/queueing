@@ -11,57 +11,99 @@ namespace CrossPohod
 {
 	class Program
 	{
+
+		public static void ParseParams(string[] args, Modeler mod, out int iter, out TimeSpan start)
+		{
+			iter = 1;
+			start = new TimeSpan(6, 0, 0);
+
+			if (args.Length < 3)
+				return;
+
+			int i = 2;
+			string arg;
+
+			while (i < args.Length)
+			{
+				arg = args[i++].ToLower();
+
+				if ("-unlim" == arg)
+					mod.Unlimited = true;
+				else if ("-s" == arg || "-start" == arg)
+				{
+					if (i >= args.Length)
+						throw new Exception("Нет значения для флага -s");
+					arg = args[i++];
+
+					if (!TimeSpan.TryParse(arg, out start))
+						throw new Exception(String.Format("Не могу прочесть время старта: {0}", arg));
+				}
+				else if ("-h" == arg || "-help" == arg)
+					throw new Exception("");
+				else if (arg.StartsWith("-"))
+					throw new Exception(String.Format("Неизвестный ключ: {0}", arg));
+				else if (i == 2)	// не ключ!
+				{
+					if (!Int32.TryParse(arg, out iter))
+						throw new Exception(String.Format("Не могу прочесть число повторов: {0}", arg));
+				}
+			}
+		}
+
 		static void Main(string[] args)
 		{
-			if (args.Length < 3)
+			try
 			{
-				Program.PrintSyntax();
-				return;
-			}				
-			
-//			Program.TestModeler();
+				int N = 1;
+				Modeler mod;
+				TimeSpan start;
 
-			Random r = new Random();
-			Modeler mod = Modeler.Read(args[0]);
+				Random r = new Random();
 
-			FileStream fs = new FileStream(args[1], FileMode.Create, FileAccess.Write);
-			StreamWriter sw = new StreamWriter(fs);
+				if (args.Length < 2)
+					throw new Exception("");
+				mod = Modeler.Read(args[0]);
+				FileStream fs = new FileStream(args[1], FileMode.Create, FileAccess.Write);
+				StreamWriter sw = new StreamWriter(fs);
 
-			int N;
-			if (!Int32.TryParse(args[2], out N))
-				N = 1;
+				ParseParams(args, mod, out N, out start);
 
-			mod.Unlimited = args.Length >= 4 && "-unlim".CompareTo(args[3]) == 0;
-
-			for (int i = 0; i < N; i++)
-			{
-				if (i%10 == 9)
-					Console.WriteLine(i+1);
-
-				Program.StartDay1(r, mod.Nodes["Старт1"], mod.Teams, DateTime.MinValue.AddHours(6));
-				mod.Model(r);
-				mod.RetrieveTeamStat(0);
-
-				Program.StartDay2(r, mod.Nodes["Старт2"], mod.Teams, DateTime.MinValue.AddDays(1.25));
-				mod.Model(r);
-				mod.RetrieveTeamStat(1);
-
-
-				sw.WriteLine(Team.PrintHeader());
-				foreach (var t in mod.Teams.OrderBy(tm => tm.Grade).ThenBy(tm => tm.GetStat(0).Start))
+				for (int i = 0; i < N; i++)
 				{
-					sw.WriteLine(t.PrintStat());
-					t.ClearStat();
+					if (i % 10 == 9)
+						Console.WriteLine(i + 1);
+
+					Program.StartDay1(r, mod.Nodes["Старт1"], mod.Teams, DateTime.MinValue + start);
+					mod.Model(r);
+					mod.RetrieveTeamStat(0);
+
+					Program.StartDay2(r, mod.Nodes["Старт2"], mod.Teams, DateTime.MinValue.AddDays(1.25));
+					mod.Model(r);
+					mod.RetrieveTeamStat(1);
+
+
+					sw.WriteLine(Team.PrintHeader());
+					foreach (var t in mod.Teams.OrderBy(tm => tm.Grade).ThenBy(tm => tm.GetStat(0).Start))
+					{
+						sw.WriteLine(t.PrintStat());
+						t.ClearStat();
+					}
+					foreach (var n in mod.Nodes.Values)
+						n.EndOfTurn();
+
+					sw.Flush();
 				}
-				foreach (var n in mod.Nodes.Values)
-					n.EndOfTurn();
 
+				mod.PhaseStats(sw, N);
 				sw.Flush();
+				fs.Close();
 			}
-
-			mod.PhaseStats(sw, N);
-			sw.Flush();
-			fs.Close();
+			catch (Exception e)
+			{
+				if (!string.IsNullOrEmpty(e.Message))
+					Console.WriteLine("Error:\n{0}\n", e.Message);
+				PrintSyntax();
+			}
 
 			Console.Write("Press any key...");
 			Console.ReadKey();
@@ -70,9 +112,11 @@ namespace CrossPohod
 		public static void PrintSyntax()
 		{
 			Console.WriteLine("Syntax:");
-			Console.WriteLine("crosspohod configFile outCsv [NNN [-unlim]]");
+			Console.WriteLine("crosspohod config.xml out.csv [NNN] [-unlim] [-s h:mm]");
 			Console.WriteLine("\tNNN\tчисло повторений");
-			Console.WriteLine("\t-unlim\tрежим оценки необходимой пропускной способности");
+			Console.WriteLine("\nSwitches:");
+			Console.WriteLine("\tunlim\t\tрежим оценки необходимой пропускной способности");
+			Console.WriteLine("\ts start\tначало работы старта 1 дня. Например: -s 6:20");
 		}
 
 		public static void StartDay1(Random r, Node n, List<Team> teams, DateTime start)
