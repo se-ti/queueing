@@ -224,14 +224,14 @@ namespace CrossPohod
 			return new PhaseStat(Info, PInfo);
 		}
 
-		public static string PrintHeader()
+		public static string PrintHeader(double level)
 		{
-			return "Этап\t" + PhaseStat.PrintHeader();
+			return "Этап\t" + PhaseStat.PrintHeader(level);
 		}
 
-		public string PrintStat(int n)
+		public string PrintStat(int n, double level)
 		{
-			return GetStat().PrintStat(Name, n);
+			return GetStat().PrintStat(Name, n, level);
 		}
 
 		public void PrintDetailStat(TextWriter tw, IEnumerable<Team> teams)
@@ -351,14 +351,12 @@ namespace CrossPohod
 			}
 		}
 
-		public static string PrintHeader()
+		public static string PrintHeader(double level)
 		{
-			return String.Format("Команд\tмакс заг\t95% макс заг\tзанят с\tс95\tпо95\tпо\tработа {0}\t отсечек\t{0}\tснятий", TimeStat.Header());
+			return String.Format("Команд\tмакс заг\t{0}% макс заг\tзанят с\tс{0}\tпо{0}\tпо\tработа {1}\t отсечек\t{1}\tснятий", Convert.ToInt32(level * 100), TimeStat.Header(level));
 		}
-		public string PrintStat(string name, int n)
+		public string PrintStat(string name, int n, double level)
 		{
-			double level = 0.95;
-
 			Stat<PhaseInfo, int, int> load = new Stat<PhaseInfo, int, int>(PInfo, p => p.MaxLoad, p => p.MaxLoad);
 			Stat<PhaseInfo, TimeSpan, long> start = new Stat<PhaseInfo, TimeSpan, long>(PInfo, p => p.Start.TimeOfDay, p => p.Start.Ticks);
 			Stat<PhaseInfo, TimeSpan, long> end   = new Stat<PhaseInfo, TimeSpan, long>(PInfo, p => p.End.TimeOfDay, p => p.End.Ticks);

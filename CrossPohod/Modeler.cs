@@ -42,8 +42,12 @@ namespace CrossPohod
 		[XmlIgnore]
 		public bool Unlimited = false;
 
+		[XmlIgnore]
+		public double Level = 0.91;
+
 		protected Dictionary<string, List<TeamStat>> TeamStat = new Dictionary<string, List<TeamStat>>();
 		protected Dictionary<string, List<PhaseStat>> PhaseStat = new Dictionary<string, List<PhaseStat>>();
+
 
 		public void RetrieveTeamStat(int day)
 		{
@@ -57,9 +61,9 @@ namespace CrossPohod
 
 			if (num > 1)
 			{
-				tw.WriteLine(Node.PrintHeader());
+				tw.WriteLine(Node.PrintHeader(Level));
 				foreach (var node in Nodes.Values.Where(n => n.PType != PhaseType.Pass))
-					tw.WriteLine(node.PrintStat(num));
+					tw.WriteLine(node.PrintStat(num, Level));
 			}
 			else
 			{

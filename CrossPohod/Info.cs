@@ -93,9 +93,9 @@ namespace CrossPohod
 			get { return new TimeSpan(0, 0, 0, Num != 0 ? (int)(Total.TotalSeconds / Num) : 0); }
 		}
 
-		public static string Header()
+		public static string Header(double level)
 		{
-			return "min\tm95\tM95\tMax\tсредн";
+			return String.Format("min\tm{0}\tM{0}\tMax\tсредн", Convert.ToInt32(level * 100));
 		}
 
 		public String Print(double level)
@@ -104,7 +104,7 @@ namespace CrossPohod
 				return "0\t0\t0\t0\t0";
 
 			Stat<TimeSpan, TimeSpan, long> stat = new Stat<TimeSpan, TimeSpan, long>(all, ts => ts, ts => ts.Ticks);
-			return string.Format("{0}\t{1}\t{2}\t{3}\t{4}", Min, stat.Min(level), stat.Max(level), Max, Mean);
+			return string.Format("{0}\t{1}\t{2}\t{3}\t{4}", Min, stat.Min(level/2), stat.Max(level/2), Max, Mean);
 		}
 
 	}
