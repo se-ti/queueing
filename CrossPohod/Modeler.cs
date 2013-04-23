@@ -56,8 +56,18 @@ namespace CrossPohod
 		[XmlIgnore]
 		public bool Unlimited = false;
 
+		protected double m_level = 0.95;
 		[XmlIgnore]
-		public double Level = 0.95;
+		public double Level 
+		{
+			get {return m_level;}
+			set 
+			{
+				if (value <= 0 || value > 1)
+					throw new ArgumentOutOfRangeException("Modeler.Level");
+				m_level = value;
+			}
+		}
 
 		protected Dictionary<string, List<TeamStat>> TeamStat = new Dictionary<string, List<TeamStat>>();
 		protected Dictionary<string, List<PhaseStat>> PhaseStat = new Dictionary<string, List<PhaseStat>>();

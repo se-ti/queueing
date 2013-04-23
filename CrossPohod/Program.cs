@@ -62,7 +62,7 @@ namespace CrossPohod
 			catch (Exception e)
 			{
 				if (!string.IsNullOrEmpty(e.Message))
-					Console.WriteLine("Error:\n{0}\n", e.Message);
+					Console.WriteLine("Error:\n{0}\n {1}\n", e.Message, e.StackTrace);
 				PrintSyntax();
 			}
 
@@ -73,13 +73,19 @@ namespace CrossPohod
 		public static void PrintSyntax()
 		{
 			Console.WriteLine("Syntax:");
-			Console.WriteLine("crosspohod config.xml out.csv [NNN] [-unlim] [-s h:mm]");
-			Console.WriteLine("\tNNN\tчисло повторений");
+			Console.WriteLine("crosspohod config.xml out.csv [NNN] [-unlim] [-s h:mm] [-l lev]");
+			Console.WriteLine("\tNNN\tчисло повторений, значение по умолчанию 1");
 			Console.WriteLine("\nSwitches:");
-			Console.WriteLine("\tunlim\t\tрежим оценки необходимой пропускной способности");
+			Console.WriteLine("\tl level\tуровень квантилей. Значение по умолчанию 0,95. Например: -l 0,9");
 			Console.WriteLine("\ts start\tначало работы старта 1 дня. Например: -s 6:20");
+			Console.WriteLine("\tu unlim\tрежим оценки необходимой пропускной способности");
 		}
-		
+
+		private static Exception NoValue(string arg)
+		{
+			return new Exception(String.Format("Нет значения для флага {0}", arg));
+		}
+
 		public static void ParseParams(string[] args, Modeler mod, out int iter, out TimeSpan start)
 		{
 			iter = 1;
@@ -95,12 +101,26 @@ namespace CrossPohod
 			{
 				arg = args[i++].ToLower();
 
-				if ("-unlim" == arg)
+				if ("-u" == arg || "-unlim" == arg)
 					mod.Unlimited = true;
+				else if ("-l" == arg || "-level" == arg)
+				{
+					if (i >= args.Length)
+						throw NoValue(arg);
+					arg = args[i++];
+
+					double l;
+					if (!double.TryParse(arg, out l))
+						throw new Exception(String.Format("Не могу прочесть уровень квантилей: '{0}'", arg));
+
+					if (l <= 0 || l > 1)
+						throw new Exception(String.Format("Уровень квантилей вне диапазона (0; 1]", l));
+					mod.Level = l;
+				}
 				else if ("-s" == arg || "-start" == arg)
 				{
 					if (i >= args.Length)
-						throw new Exception("Нет значения для флага -s");
+						throw NoValue(arg);
 					arg = args[i++];
 
 					if (!TimeSpan.TryParse(arg, out start))
@@ -110,7 +130,7 @@ namespace CrossPohod
 					throw new Exception("");
 				else if (arg.StartsWith("-"))
 					throw new Exception(String.Format("Неизвестный ключ: '{0}'", arg));
-				else if (i == 2)	// не ключ!
+				else if (i == 3)	// не ключ!
 				{
 					if (!Int32.TryParse(arg, out iter) || iter <= 0)
 						throw new Exception(String.Format("Не могу прочесть число повторов: '{0}'", arg));
@@ -204,6 +224,5 @@ namespace CrossPohod
 				string s = e.Message;
 			}
 		}
-
 	}
 }
