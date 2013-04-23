@@ -230,13 +230,29 @@ namespace CrossPohod
 
 		public string PrintStat(int n, double level)
 		{
-			return GetStat().PrintStat(Name, n, level);
+			return GetStat().PrintStat(Name, n, level, Times.Max);
 		}
 
 		public void PrintDetailStat(TextWriter tw, IEnumerable<Team> teams)
 		{
-			tw.Write(Name);
 			StringBuilder sb = new StringBuilder();
+
+			switch (PType)
+			{ 
+				case PhaseType.Start:
+					tw.Write(Name + "\tВремя старта");
+					sb.AppendFormat("\tработа");
+					break;
+				case PhaseType.Finish:
+					tw.Write(Name + "\tработа");
+					sb.AppendFormat("\tВремя финиша");
+					break;
+				default:
+					tw.Write(Name + "\tотсечка");
+					sb.AppendFormat("\tработа");
+					break;
+			}
+
 			PhaseTeamInfo info;
 			foreach (var t in teams)
 			{
@@ -257,28 +273,30 @@ namespace CrossPohod
 
 		protected void PrintTeamStat(TextWriter tw, StringBuilder sb, PhaseTeamInfo info)
 		{
-			if (PType == PhaseType.Start)
+			switch(PType) 
 			{
-				tw.Write("\t{0}", info.When.TimeOfDay);
-				sb.AppendFormat("\t{0}", info.Time);
-			}
-			else if (PType == PhaseType.Finish)
-			{
-				tw.Write("\t{0}", info.Time);
-				sb.AppendFormat("\t{0}", info.When.TimeOfDay);
-			}
-			else
-			{
-				tw.Write("\t{0}", info.Time);
-				sb.Append("\t");
-				if (info.Wait != TimeSpan.Zero)
-					sb.AppendFormat("{0}", info.Wait);
+				case PhaseType.Start:
+					tw.Write("\t{0}", info.When.TimeOfDay);
+					sb.AppendFormat("\t{0}", info.Time);
+					break;
+				
+				case PhaseType.Finish:
+					tw.Write("\t{0}", info.Time);
+					sb.AppendFormat("\t{0}", info.When.TimeOfDay);
+					break;
+
+				default:
+					tw.Write("\t");
+					if (info.Wait != TimeSpan.Zero)
+						tw.Write("{0}", info.Wait);
+					sb.AppendFormat("\t{0}", info.Time);
+					break;
 			}
 		}
 
 		public static void PrintDetailStatHeader(TextWriter tw, IEnumerable<Team>teams)
 		{
-			tw.Write("Этап");
+			tw.Write("Этап\t");
 			foreach (var t in teams)
 				tw.Write("\t{0}", t.Name);
 			tw.WriteLine();
@@ -352,15 +370,15 @@ namespace CrossPohod
 
 		public static string PrintHeader(double level)
 		{
-			return String.Format("Команд\tмакс заг\t{0}% макс заг\tзанят с\tс{0}\tпо{0}\tпо\tработа {1}\t отсечек\t{1}\tснятий", Convert.ToInt32(level * 100), TimeStat.Header(level));
+			return String.Format("Команд\tмакс заг\t{0}% макс заг\tзанят с\tс{0}\tпо{0}\tпо\tработа {1}\t отсечек\t{1}\tснятий\tКВ", Convert.ToInt32(level * 100), TimeStat.Header(level));
 		}
-		public string PrintStat(string name, int n, double level)
+		public string PrintStat(string name, int n, double level, TimeSpan max)
 		{
 			Stat<PhaseInfo, int, int> load = new Stat<PhaseInfo, int, int>(PInfo, p => p.MaxLoad, p => p.MaxLoad);
 			Stat<PhaseInfo, TimeSpan, long> start = new Stat<PhaseInfo, TimeSpan, long>(PInfo, p => p.Start.TimeOfDay, p => p.Start.Ticks);
 			Stat<PhaseInfo, TimeSpan, long> end   = new Stat<PhaseInfo, TimeSpan, long>(PInfo, p => p.End.TimeOfDay,   p => p.End.Ticks);
 
-			return String.Format("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\t{8}\t{9}\t{10}\t{11}", name, Teams / n, load.Max(), load.Max(level), start.Min(), start.Min(level), end.Max(level), end.Max(), Time.Print(level), Div(Wait.Num, n), Wait.Print(level), Div(Rejects, n));
+			return String.Format("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\t{8}\t{9}\t{10}\t{11}\t{12}", name, Teams / n, load.Max(), load.Max(level), start.Min(), start.Min(level), end.Max(level), end.Max(), Time.Print(level), Div(Wait.Num, n), Wait.Print(level), Div(Rejects, n), max != TimeSpan.Zero ? max.ToString() : "");
 		}
 
 		private static decimal Div(int n, int m)
