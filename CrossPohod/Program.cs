@@ -9,6 +9,16 @@ using Distance = System.Collections.Generic.Dictionary<string, CrossPohod.Node>;
 
 namespace CrossPohod
 {
+
+	public class CPException : Exception 
+	{
+		public CPException() : base() { }
+		public CPException(string message) : base(message) { }
+		public CPException(string message, Exception e) : base(message, e) { }
+		public CPException(string format, params Object[] args) : base(String.Format(format, args)) {}
+	}
+
+
 	class Program
 	{
 		static void Main(string[] args)
@@ -59,11 +69,15 @@ namespace CrossPohod
 				sw.Flush();
 				fs.Close();
 			}
+			catch (CPException cp)
+			{
+				if (!string.IsNullOrEmpty(cp.Message))
+					Console.WriteLine("Error:\n{0}\n", cp.Message);
+				PrintSyntax();
+			}
 			catch (Exception e)
 			{
-				if (!string.IsNullOrEmpty(e.Message))
-					Console.WriteLine("Error:\n{0}\n {1}\n", e.Message, e.StackTrace);
-				PrintSyntax();
+				Console.WriteLine("Error:\n{0}\n {1}\n", e.Message, e.StackTrace);
 			}
 
 			Console.Write("Press any key...");
@@ -81,9 +95,9 @@ namespace CrossPohod
 			Console.WriteLine("\tu unlim\tрежим оценки необходимой пропускной способности");
 		}
 
-		private static Exception NoValue(string arg)
+		private static CPException NoValue(string arg)
 		{
-			return new Exception(String.Format("Нет значения для флага {0}", arg));
+			return new CPException("Нет значения для флага {0}", arg);
 		}
 
 		public static void ParseParams(string[] args, Modeler mod, out int iter, out TimeSpan start)
@@ -111,10 +125,10 @@ namespace CrossPohod
 
 					double l;
 					if (!double.TryParse(arg, out l))
-						throw new Exception(String.Format("Не могу прочесть уровень квантилей: '{0}'", arg));
+						throw new CPException("Не могу прочесть уровень квантилей: '{0}'", arg);
 
 					if (l <= 0 || l > 1)
-						throw new Exception(String.Format("Уровень квантилей вне диапазона (0; 1]", l));
+						throw new CPException("Уровень квантилей вне диапазона (0; 1]", l);
 					mod.Level = l;
 				}
 				else if ("-s" == arg || "-start" == arg)
@@ -124,16 +138,16 @@ namespace CrossPohod
 					arg = args[i++];
 
 					if (!TimeSpan.TryParse(arg, out start))
-						throw new Exception(String.Format("Не могу прочесть время старта: '{0}'", arg));
+						throw new CPException("Не могу прочесть время старта: '{0}'", arg);
 				}
 				else if ("-h" == arg || "-help" == arg)
-					throw new Exception("");
+					throw new CPException("");
 				else if (arg.StartsWith("-"))
-					throw new Exception(String.Format("Неизвестный ключ: '{0}'", arg));
+					throw new CPException("Неизвестный ключ: '{0}'", arg);
 				else if (i == 3)	// не ключ!
 				{
 					if (!Int32.TryParse(arg, out iter) || iter <= 0)
-						throw new Exception(String.Format("Не могу прочесть число повторов: '{0}'", arg));
+						throw new CPException("Не могу прочесть число повторов: '{0}'", arg);
 				}
 			}
 		}

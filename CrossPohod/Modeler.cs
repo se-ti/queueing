@@ -64,13 +64,13 @@ namespace CrossPohod
 			set 
 			{
 				if (value <= 0 || value > 1)
-					throw new ArgumentOutOfRangeException("Modeler.Level");
+					throw new ArgumentOutOfRangeException("Modeler.Level", value, "Значение вне диапазона (0; 1]");
 				m_level = value;
 			}
 		}
 
-		protected Dictionary<string, List<TeamStat>> TeamStat = new Dictionary<string, List<TeamStat>>();
-		protected Dictionary<string, List<PhaseStat>> PhaseStat = new Dictionary<string, List<PhaseStat>>();
+		//protected Dictionary<string, List<TeamStat>> TeamStat = new Dictionary<string, List<TeamStat>>();
+		//protected Dictionary<string, List<PhaseStat>> PhaseStat = new Dictionary<string, List<PhaseStat>>();
 
 
 		public void RetrieveTeamStat(int day)
