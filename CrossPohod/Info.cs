@@ -133,6 +133,9 @@ namespace CrossPohod
 
 		public Val Min()
 		{
+			if (m_sorted.Length == 0)
+				return m_accessor(new Elem());
+
 			return m_accessor(m_sorted[0]);
 		}
 
@@ -150,6 +153,8 @@ namespace CrossPohod
 
 		public Val Max()
 		{
+			if (m_sorted.Length == 0 )
+				return m_accessor(new Elem());
 			return m_accessor(m_sorted[m_sorted.Length - 1]);
 		}
 
