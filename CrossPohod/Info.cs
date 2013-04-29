@@ -104,7 +104,7 @@ namespace CrossPohod
 				return "0\t0\t0\t0\t0";
 
 			Stat<TimeSpan, TimeSpan, long> stat = new Stat<TimeSpan, TimeSpan, long>(all, ts => ts, ts => ts.Ticks);
-			return string.Format("{0}\t{1}\t{2}\t{3}\t{4}", Min, stat.Min(level/2), stat.Max(level/2), Max, Mean);
+			return string.Format("{0}\t{1}\t{2}\t{3}\t{4}", Min, stat.Min(0.5 + level/2), stat.Max(0.5 + level/2), Max, Mean);
 		}
 
 	}
@@ -141,7 +141,11 @@ namespace CrossPohod
 			if (level < 0 || level > 1)
 				return m_accessor(new Elem());
 
-			return m_accessor(m_sorted[Step(level)]);
+			int pos = Step(level);
+			if (pos < 0 || pos >= m_sorted.Length)
+				throw new Exception(String.Format("Min.Out Of Bounds, level {0}, pos {1}, len {2}", level, pos, m_sorted.Length));
+
+			return m_accessor(m_sorted[pos]);
 		}
 
 		public Val Max()
@@ -154,7 +158,11 @@ namespace CrossPohod
 			if (level < 0 || level > 1)
 				return m_accessor(new Elem());
 
-			return m_accessor(m_sorted[m_sorted.Length - 1 - Step(level)]);
+			int pos = m_sorted.Length - 1 - Step(level);
+			if (pos < 0 || pos >= m_sorted.Length)
+				throw new Exception(String.Format("Max.Out Of Bounds, level {0}, pos {1}, len {2}", level, pos, m_sorted.Length));
+
+			return m_accessor(m_sorted[pos]);
 		}
 
 		public void MinMax(double level, out Val min, out Val max)
@@ -165,6 +173,9 @@ namespace CrossPohod
 
 		public Val Median()
 		{
+			if (m_sorted.Length == 0)
+				return m_accessor(new Elem());
+
 			return m_accessor(m_sorted[m_sorted.Length / 2]);
 		}
 	}
