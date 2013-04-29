@@ -22,6 +22,13 @@ namespace CrossPohod
 		}
 	}
 
+	public class ModelerParams
+	{
+		public string Source = "source.xml";
+		public double Level = 0.95;
+		public bool Unlimited = false;
+	}
+
 	[Serializable]
 	public class Modeler
 	{
@@ -136,15 +143,18 @@ namespace CrossPohod
 
 
 		#region Serialize
-		public static Modeler Read(string file)
+		public static Modeler Read(ModelerParams param)
 		{
-			var fstream = new FileStream(file, FileMode.Open, FileAccess.Read);
+			var fstream = new FileStream(param.Source, FileMode.Open, FileAccess.Read);
 			var xmlFormat = new XmlSerializer(typeof(Modeler), SerializerTypes);
 
 			var m = xmlFormat.Deserialize(fstream) as Modeler;
 			fstream.Close();
 
 			m.SetupLinks();
+
+			m.Level = param.Level;
+			m.Unlimited = param.Unlimited;
 			return m;
 		}
 

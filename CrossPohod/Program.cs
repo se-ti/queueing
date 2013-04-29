@@ -18,6 +18,89 @@ namespace CrossPohod
 		public CPException(string format, params Object[] args) : base(String.Format(format, args)) {}
 	}
 
+	public class PrintSyntaxEception : Exception
+	{
+		public PrintSyntaxEception() : base() { }
+	}
+
+	public class ProgramParams : ModelerParams
+	{
+		public string Out = "out.csv";
+
+		public int Times = 1;
+		public TimeSpan Start = TimeSpan.MinValue;
+
+
+		public static ProgramParams Parse(string[] args)
+		{
+			if (args == null || args.Length < 2)
+				throw new CPException("Недостаточно параметров");
+
+			ProgramParams res = new ProgramParams()
+			{
+				Times = 1,
+				Unlimited = false,
+				Start = new TimeSpan(6, 0, 0),
+
+				Source = args[0],
+				Out = args[1]
+			};
+
+
+			if (args.Length < 3)
+				return res;
+
+			int i = 2;
+			string arg;
+
+			while (i < args.Length)
+			{
+				arg = args[i++].ToLower();
+
+				if ("-u" == arg || "-unlim" == arg)
+					res.Unlimited = true;
+				else if ("-l" == arg || "-level" == arg)
+				{
+					if (i >= args.Length)
+						throw NoValue(arg);
+					arg = args[i++];
+
+					double l;
+					if (!double.TryParse(arg, out l))
+						throw new CPException("Не могу прочесть уровень квантилей: '{0}'", arg);
+
+					if (l <= 0 || l > 1)
+						throw new CPException("Уровень квантилей вне диапазона (0; 1]", l);
+					res.Level = l;
+				}
+				else if ("-s" == arg || "-start" == arg)
+				{
+					if (i >= args.Length)
+						throw NoValue(arg);
+					arg = args[i++];
+
+					if (!TimeSpan.TryParse(arg, out res.Start))
+						throw new CPException("Не могу прочесть время старта: '{0}'", arg);
+				}
+				else if ("-h" == arg || "-help" == arg)
+					throw new PrintSyntaxEception();
+				else if (arg.StartsWith("-"))
+					throw new CPException("Неизвестный ключ: '{0}'", arg);
+				else if (i == 3)	// не ключ!
+				{
+					if (!Int32.TryParse(arg, out res.Times) || res.Times <= 0)
+						throw new CPException("Не могу прочесть число повторов: '{0}'", arg);
+				}
+			}
+
+			return res;
+		}
+
+		private static CPException NoValue(string arg)
+		{
+			return new CPException("Нет значения для флага {0}", arg);
+		}
+	}
 
 	class Program
 	{
@@ -25,26 +108,21 @@ namespace CrossPohod
 		{
 			try
 			{
-				int N = 1;
-				Modeler mod;
-				TimeSpan start;
-
 				Random r = new Random();
 
-				if (args.Length < 2)
-					throw new Exception("");
-				mod = Modeler.Read(args[0]);
-				FileStream fs = new FileStream(args[1], FileMode.Create, FileAccess.Write);
+				ProgramParams param = ProgramParams.Parse(args);
+				Modeler mod = Modeler.Read(param);
+
+				FileStream fs = new FileStream(param.Out, FileMode.Create, FileAccess.Write);
 				StreamWriter sw = new StreamWriter(fs);
 
-				ParseParams(args, mod, out N, out start);
 
-				for (int i = 0; i < N; i++)
+				for (int i = 0; i < param.Times; i++)
 				{
 					if (i % 10 == 9)
 						Console.WriteLine(i + 1);
 
-					Program.StartDay1(r, mod.Nodes["Старт1"], mod.Teams, DateTime.MinValue + start);
+					Program.StartDay1(r, mod.Nodes["Старт1"], mod.Teams, DateTime.MinValue + param.Start);
 					mod.Model(r);
 					mod.RetrieveTeamStat(0);
 
@@ -65,14 +143,17 @@ namespace CrossPohod
 					sw.Flush();
 				}
 
-				mod.PhaseStats(sw, N);
+				mod.PhaseStats(sw, param.Times);
 				sw.Flush();
 				fs.Close();
 			}
 			catch (CPException cp)
 			{
-				if (!string.IsNullOrEmpty(cp.Message))
-					Console.WriteLine("Error:\n{0}\n", cp.Message);
+				Console.WriteLine("Error:\n{0}\n", cp.Message);
+				PrintSyntax();
+			}
+			catch (PrintSyntaxEception)
+			{
 				PrintSyntax();
 			}
 			catch (Exception e)
@@ -93,63 +174,6 @@ namespace CrossPohod
 			Console.WriteLine("\tl level\tуровень квантилей. Значение по умолчанию 0,95. Например: -l 0,9");
 			Console.WriteLine("\ts start\tначало работы старта 1 дня. Например: -s 6:20");
 			Console.WriteLine("\tu unlim\tрежим оценки необходимой пропускной способности");
-		}
-
-		private static CPException NoValue(string arg)
-		{
-			return new CPException("Нет значения для флага {0}", arg);
-		}
-
-		public static void ParseParams(string[] args, Modeler mod, out int iter, out TimeSpan start)
-		{
-			iter = 1;
-			start = new TimeSpan(6, 0, 0);
-
-			if (args.Length < 3)
-				return;
-
-			int i = 2;
-			string arg;
-
-			while (i < args.Length)
-			{
-				arg = args[i++].ToLower();
-
-				if ("-u" == arg || "-unlim" == arg)
-					mod.Unlimited = true;
-				else if ("-l" == arg || "-level" == arg)
-				{
-					if (i >= args.Length)
-						throw NoValue(arg);
-					arg = args[i++];
-
-					double l;
-					if (!double.TryParse(arg, out l))
-						throw new CPException("Не могу прочесть уровень квантилей: '{0}'", arg);
-
-					if (l <= 0 || l > 1)
-						throw new CPException("Уровень квантилей вне диапазона (0; 1]", l);
-					mod.Level = l;
-				}
-				else if ("-s" == arg || "-start" == arg)
-				{
-					if (i >= args.Length)
-						throw NoValue(arg);
-					arg = args[i++];
-
-					if (!TimeSpan.TryParse(arg, out start))
-						throw new CPException("Не могу прочесть время старта: '{0}'", arg);
-				}
-				else if ("-h" == arg || "-help" == arg)
-					throw new CPException("");
-				else if (arg.StartsWith("-"))
-					throw new CPException("Неизвестный ключ: '{0}'", arg);
-				else if (i == 3)	// не ключ!
-				{
-					if (!Int32.TryParse(arg, out iter) || iter <= 0)
-						throw new CPException("Не могу прочесть число повторов: '{0}'", arg);
-				}
-			}
 		}
 
 		public static void StartDay1(Random r, Node n, List<Team> teams, DateTime start)
