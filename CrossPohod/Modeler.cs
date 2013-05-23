@@ -27,6 +27,8 @@ namespace CrossPohod
 		public string Source = "source.xml";
 		public double Level = 0.95;
 		public bool Unlimited = false;
+		public TimeSpan Before = TimeSpan.Zero;
+		public TimeSpan After = TimeSpan.Zero;
 	}
 
 	[Serializable]
@@ -76,6 +78,11 @@ namespace CrossPohod
 			}
 		}
 
+		[XmlIgnore]
+		public TimeSpan Before = TimeSpan.Zero;
+		[XmlIgnore]
+		public TimeSpan After = TimeSpan.Zero;
+
 		//protected Dictionary<string, List<TeamStat>> TeamStat = new Dictionary<string, List<TeamStat>>();
 		//protected Dictionary<string, List<PhaseStat>> PhaseStat = new Dictionary<string, List<PhaseStat>>();
 
@@ -98,9 +105,23 @@ namespace CrossPohod
 			}
 			else
 			{
-				Node.PrintDetailStatHeader(tw, Teams);
+				List<Team> teams = null;
 				foreach (var node in Nodes.Values)
-					node.PrintDetailStat(tw, Teams);
+				{
+					if (node.PType == PhaseType.Start || teams == null)
+					{
+						if (node.PType == PhaseType.Start)
+							teams = Teams.OrderBy(t => t.Grade)
+										 .ThenBy(t => { var i = node.GetTeamInfo(t); return i != null ? i.When : DateTime.MaxValue; })
+										 .ToList();
+						else
+							teams = Teams;
+						
+						Node.PrintDetailStatHeader(tw, teams);
+					}
+
+					node.PrintDetailStat(tw, teams);
+				}
 			}
 		}
 
@@ -118,7 +139,7 @@ namespace CrossPohod
 
 		protected void Process(Random r, CPEvent pe)
 		{
-			pe.Node.TeamLeave(r, pe);
+			pe.Node.TeamLeave(r, pe, Before);
 
 			if (pe.Node.PType == PhaseType.Finish)
 				return;
@@ -128,7 +149,11 @@ namespace CrossPohod
 			if (next == null )
 				throw new Exception(String.Format("Обрыв цепочки на этапе '{0}', PType='{1}', для класса {2}", pe.Node.Name, pe.Node.PType, pe.Team.Grade));
 
-			next.AddTeam(r, pe, Unlimited);
+			CPEvent ne = pe;
+			if (pe.Node.PType == PhaseType.Tech)
+				ne = new CPEvent(pe.Node, pe.Team, pe.Time + After);
+
+			next.AddTeam(r, ne, Unlimited, Before);
 		}
 
 		protected CPEvent GetEvent()
@@ -155,6 +180,8 @@ namespace CrossPohod
 
 			m.Level = param.Level;
 			m.Unlimited = param.Unlimited;
+			m.Before = param.Before;
+			m.After = param.After;
 			return m;
 		}
 

@@ -120,7 +120,16 @@ namespace CrossPohod
 				m_start = time;
 		}
 
-		public void TeamLeave(Random r, CPEvent evt)
+		protected void CheckLeave(CPEvent evt)
+		{
+			if (evt.Time < When)
+			{
+				m_when = evt.Time;
+				m_next = evt;
+			}
+		}
+
+		public void TeamLeave(Random r, CPEvent evt, TimeSpan before)
 		{
 			if (!Process.Remove(evt))
 				throw new Exception(String.Format("На этапе {0} нет команды {1}", Name, evt.Team.Name));
@@ -140,11 +149,21 @@ namespace CrossPohod
 			if (Wait.Any())
 			{
 				var e = Wait.Dequeue();
-				AddTeam(r, e.Team, evt.Time, evt.Time - e.Time);
+				TimeSpan prepare = PType != PhaseType.Tech ? TimeSpan.Zero : before;
+				TimeSpan wait = evt.Time - e.Time;
+
+				if (prepare > TimeSpan.Zero)	// этап только освободился, а мы уже готовы
+				{
+					var min = wait < prepare ? wait : prepare;
+					wait -= min;
+					prepare -= min;
+				}
+
+				AddTeam(r, e.Team, evt.Time + prepare, wait);
 			}
 		}
 
-		public void AddTeam(Random r, CPEvent e, bool unlimited)
+		public void AddTeam(Random r, CPEvent e, bool unlimited, TimeSpan before)
 		{
 			CheckStart(e.Time);
 
@@ -152,10 +171,12 @@ namespace CrossPohod
 			if (load > m_maxLoad)
 				m_maxLoad = load;
 
+			TimeSpan prepare = PType != PhaseType.Tech ? TimeSpan.Zero : before;
+
 			if (!unlimited && Channels > 0 && Process.Count >= Channels)
 				Wait.Enqueue(new CPEvent(this, e.Team, e.Time));
 			else
-				AddTeam(r, e.Team, e.Time, TimeSpan.Zero);
+				AddTeam(r, e.Team, e.Time + prepare, TimeSpan.Zero);
 		}
 
 		protected void AddTeam(Random r, Team t, DateTime when, TimeSpan wait)
@@ -177,12 +198,7 @@ namespace CrossPohod
 
 			var evt = new CPEvent(this, t, when + dur);
 			Process.Add(evt);
-
-			if (evt.Time < When)
-			{
-				m_when = evt.Time;
-				m_next = evt;
-			}
+			CheckLeave(evt);			
 		}
 
 		public void AddToStart(Random r, Team t, DateTime time)	// время старта!!!
@@ -204,6 +220,11 @@ namespace CrossPohod
 			}
 
 			CheckStart(time);
+		}
+
+		public PhaseTeamInfo GetTeamInfo(Team t)
+		{
+			return Info.FirstOrDefault( i => i.Team == t);
 		}
 
 		public void EndOfTurn()
@@ -296,7 +317,7 @@ namespace CrossPohod
 
 		public static void PrintDetailStatHeader(TextWriter tw, IEnumerable<Team>teams)
 		{
-			tw.Write("Этап\t");
+			tw.Write("\nЭтап\t");
 			foreach (var t in teams)
 				tw.Write("\t{0}", t.Name);
 			tw.WriteLine();

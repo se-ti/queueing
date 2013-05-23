@@ -18,9 +18,9 @@ namespace CrossPohod
 		public CPException(string format, params Object[] args) : base(String.Format(format, args)) {}
 	}
 
-	public class PrintSyntaxEception : Exception
+	public class PrintSyntaxException : Exception
 	{
-		public PrintSyntaxEception() : base() { }
+		public PrintSyntaxException() : base() { }
 	}
 
 	public class ProgramParams : ModelerParams
@@ -73,6 +73,11 @@ namespace CrossPohod
 						throw new CPException("Уровень квантилей вне диапазона (0; 1]", l);
 					res.Level = l;
 				}
+				if ("-p" == arg || "-prepare" == arg)
+				{
+					res.Before = new TimeSpan(0, 3, 0);
+					res.After = new TimeSpan(0, 5, 0);
+				}
 				else if ("-s" == arg || "-start" == arg)
 				{
 					if (i >= args.Length)
@@ -83,7 +88,7 @@ namespace CrossPohod
 						throw new CPException("Не могу прочесть время старта: '{0}'", arg);
 				}
 				else if ("-h" == arg || "-help" == arg)
-					throw new PrintSyntaxEception();
+					throw new PrintSyntaxException();
 				else if (arg.StartsWith("-"))
 					throw new CPException("Неизвестный ключ: '{0}'", arg);
 				else if (i == 3)	// не ключ!
@@ -152,7 +157,7 @@ namespace CrossPohod
 				Console.WriteLine("Error:\n{0}\n", cp.Message);
 				PrintSyntax();
 			}
-			catch (PrintSyntaxEception)
+			catch (PrintSyntaxException)
 			{
 				PrintSyntax();
 			}
@@ -172,6 +177,7 @@ namespace CrossPohod
 			Console.WriteLine("\tNNN\tчисло повторений, значение по умолчанию 1");
 			Console.WriteLine("\nSwitches:");
 			Console.WriteLine("\tl level\tуровень квантилей. Значение по умолчанию 0,95. Например: -l 0,9");
+			Console.WriteLine("\tp prepare\tдобавлять время на подготовку и сборы до и после тех. этапов");
 			Console.WriteLine("\ts start\tначало работы старта 1 дня. Например: -s 6:20");
 			Console.WriteLine("\tu unlim\tрежим оценки необходимой пропускной способности");
 		}
