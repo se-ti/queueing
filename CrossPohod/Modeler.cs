@@ -86,7 +86,6 @@ namespace CrossPohod
 		//protected Dictionary<string, List<TeamStat>> TeamStat = new Dictionary<string, List<TeamStat>>();
 		//protected Dictionary<string, List<PhaseStat>> PhaseStat = new Dictionary<string, List<PhaseStat>>();
 
-
 		public void RetrieveTeamStat(int day)
 		{
 			foreach (var t in Teams)

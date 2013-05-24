@@ -35,6 +35,7 @@ namespace CrossPohod
 				var res = new TeamStat();
 				foreach (var ts in m_stat)
 					res += ts;
+
 				return res;
 			}
 		}
@@ -76,11 +77,6 @@ namespace CrossPohod
 		{
 			m_stat = null;
 		}
-		public TeamStat RecomputeStat()
-		{
-			ClearStat();
-			return TotalStat;
-		}
 
 		public void SetStart(DateTime time)
 		{
@@ -89,11 +85,15 @@ namespace CrossPohod
 
 		public static string PrintHeader()
 		{
-			return "Команда\t" + TeamStat.StatHeader();
+			return "Команда\t" + TeamStat.StatHeader(true) + TeamStat.StatHeader(true) + TeamStat.StatHeader(false);
 		}
 		public string PrintStat()
 		{
-			return String.Format("{0}\t{1}", Name, TotalStat.ToString());
+			string stats = "";
+			foreach (var s in m_stat)
+				stats += String.Format("{0}\t", s.ToString(true));
+
+			return String.Format("{0}\t{1}{2}", Name, stats, TotalStat.ToString(false));
 		}
 	}
 
@@ -135,39 +135,53 @@ namespace CrossPohod
 				Wait += i.Wait;
 				if (i.Reject)
 				{
+					RejectComment += (Reject <= 0 ? "" : ", ") + i.Phase.Name;
 					Reject++;
-					RejectComment += " " + i.Phase.Name;
 				}
 				if (i.Wait != TimeSpan.Zero)
 				{
+					WaitComment += (Waits <= 0 ? "" : ", ") + i.Phase.Name;
 					Waits++;
-					WaitComment += " " + i.Phase.Name;
 				}
 			}
+		}
+
+		protected static bool NeedJoin(string a, string b)
+		{
+			return !String.IsNullOrEmpty(a) && !String.IsNullOrEmpty(b);
+		}
+
+		protected static string Join(string a, string b)
+		{
+			return a + (NeedJoin(a, b) ? ", " : "") + b;
 		}
 
 		public static TeamStat operator + (TeamStat a, TeamStat b)
 		{
 			var r = new TeamStat();
-			r.Start = a.Start;
+			r.Start = a.Start != DateTime.MinValue ? a.Start : b.Start;
 
 			r.Time = a.Time + b.Time;
 			r.Wait = a.Wait + b.Wait;
 			r.Reject = a.Reject + b.Reject;
 			r.Waits = a.Waits + b.Waits;
-			r.RejectComment = a.RejectComment + b.RejectComment;
-			r.WaitComment = a.WaitComment + b.WaitComment;
+			r.RejectComment = Join(a.RejectComment, b.RejectComment);
+			r.WaitComment = Join(a.WaitComment, b.WaitComment);
 
 			return r;
 		}
 
-		public static string StatHeader()
+		public static string StatHeader(bool reduced)
 		{
-			return "Старт\tРабота\tОтсечек\tНа отс.\tСнятий\tСнятия\tОтсечки\t";
+			return reduced ? 
+				"Cтарт\tРабота\tОтсечек\tНа отс.\tСнятий\t" :
+				"Работа\tОтсечек\tНа отс.\tСнятий\tСнятия\tОтсечки\t";
 		}
-		public override string ToString()
+		public string ToString(bool reduced)
 		{
-			return String.Format("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}", Start.TimeOfDay, Time.ToString(), Waits, Wait.ToString(), Reject, RejectComment, WaitComment);
+			string s = String.Format("{0}\t{1}\t{2}\t{3}", Time.ToString(), Waits, Wait.ToString(), Reject);
+
+			return reduced ? String.Format("{0}\t{1}", Start.TimeOfDay, s) : String.Format("{0}\t{1}\t{2}", s, RejectComment, WaitComment);
 		}
 	}
 }

@@ -211,6 +211,7 @@ namespace CrossPohod
 			Process.Add(evt);
 
 			BaseInfo bi = new BaseInfo(ts, TimeSpan.Zero, false);
+			t.AddPhase(this, bi);
 			Info.Add(new PhaseTeamInfo(t, bi) {When = time});
 
 			if (m_when == DateTime.MaxValue || m_when > time)
