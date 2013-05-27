@@ -141,7 +141,7 @@ namespace CrossPohod
 
 		public Val Min(double level)
 		{
-			if (level < 0 || level > 1)
+			if (level < 0 || level > 1 || m_sorted.Length == 0)
 				return m_accessor(new Elem());
 
 			int pos = Step(level);
@@ -160,7 +160,7 @@ namespace CrossPohod
 
 		public Val Max(double level)
 		{
-			if (level < 0 || level > 1)
+			if (level < 0 || level > 1 || m_sorted.Length == 0)
 				return m_accessor(new Elem());
 
 			int pos = m_sorted.Length - 1 - Step(level);
