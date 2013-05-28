@@ -135,7 +135,7 @@ namespace CrossPohod
 
 		protected void Process(Random r, CPEvent pe)
 		{
-			pe.Node.TeamLeave(r, pe, Before);
+			pe.Node.TeamLeave(r, pe);
 
 			if (pe.Node.PType == PhaseType.Finish)
 				return;
@@ -145,11 +145,7 @@ namespace CrossPohod
 			if (next == null )
 				throw new Exception(String.Format("Обрыв цепочки на этапе '{0}', PType='{1}', для класса {2}", pe.Node.Name, pe.Node.PType, pe.Team.Grade));
 
-			CPEvent ne = pe;
-			if (pe.Node.PType == PhaseType.Tech)
-				ne = new CPEvent(pe.Node, pe.Team, pe.Time + After);
-
-			next.AddTeam(r, ne, Unlimited, Before);
+			next.AddTeam(r, new CPEvent(pe.Node, pe.Team, pe.Time + pe.Node.After) , Unlimited);
 		}
 
 		protected CPEvent GetEvent()
@@ -172,12 +168,12 @@ namespace CrossPohod
 			var m = xmlFormat.Deserialize(fstream) as Modeler;
 			fstream.Close();
 
-			m.SetupLinks();
-
 			m.Level = param.Level;
 			m.Unlimited = param.Unlimited;
 			m.Before = param.Before;
 			m.After = param.After;
+
+			m.SetupLinks();
 			return m;
 		}
 
@@ -192,7 +188,13 @@ namespace CrossPohod
 
 		protected void SetupLinks()
 		{
-			Nodes = new Dictionary<string, Node>(Phases.Select(p => new Node(p)).ToDictionary(n => n.Name, n => n));
+			Nodes = new Dictionary<string, Node>(Phases.Select(p => NodeFactory.Create(p)).ToDictionary(n => n.Name, n => n));
+
+			foreach(var node in Nodes.Values.Where(n => n.PType == PhaseType.Tech))
+			{
+				node.Before = Before;
+				node.After = After;
+			}
 
 			Node src, dest;
 			foreach (var link in Links)

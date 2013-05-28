@@ -30,10 +30,12 @@ namespace CrossPohod
 	public class TeamPhaseInfo : BaseInfo
 	{
 		public Phase Phase;
-		public TeamPhaseInfo(Phase phase, BaseInfo bi)
+		public TimeSpan Transit;
+		public TeamPhaseInfo(Phase phase, BaseInfo bi, TimeSpan transit)
 			: base(bi)
 		{
 			Phase = phase;
+			Transit = transit;
 		}
 	}
 

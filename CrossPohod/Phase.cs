@@ -83,9 +83,28 @@ namespace CrossPohod
 
 		[XmlAttribute]
 		public PhaseType PType = PhaseType.Tech;
+
+		// времена на подготовку до и после этапов
+		[XmlIgnore]	
+		public TimeSpan Before = TimeSpan.Zero;
+		[XmlIgnore]
+		public TimeSpan After = TimeSpan.Zero;
 	}
 
 	#endregion
+
+	public static class NodeFactory
+	{
+		public static Node Create(Phase p)
+		{
+			switch (p.PType)
+			{
+				case PhaseType.Start : return new StartNode(p);
+				case PhaseType.Finish: return new FinishNode(p);
+				default: return new Node(p);
+			}
+		}
+	}
 
 	public class Node: Phase
 	{
@@ -129,7 +148,7 @@ namespace CrossPohod
 			}
 		}
 
-		public void TeamLeave(Random r, CPEvent evt, TimeSpan before)
+		public void TeamLeave(Random r, CPEvent evt)
 		{
 			if (!Process.Remove(evt))
 				throw new Exception(String.Format("На этапе {0} нет команды {1}", Name, evt.Team.Name));
@@ -149,7 +168,7 @@ namespace CrossPohod
 			if (Wait.Any())
 			{
 				var e = Wait.Dequeue();
-				TimeSpan prepare = PType != PhaseType.Tech ? TimeSpan.Zero : before;
+				TimeSpan prepare = Before;
 				TimeSpan wait = evt.Time - e.Time;
 
 				if (prepare > TimeSpan.Zero)	// этап только освободился, а мы уже готовы
@@ -163,7 +182,7 @@ namespace CrossPohod
 			}
 		}
 
-		public void AddTeam(Random r, CPEvent e, bool unlimited, TimeSpan before)
+		public void AddTeam(Random r, CPEvent e, bool unlimited)
 		{
 			CheckStart(e.Time);
 
@@ -171,12 +190,10 @@ namespace CrossPohod
 			if (load > m_maxLoad)
 				m_maxLoad = load;
 
-			TimeSpan prepare = PType != PhaseType.Tech ? TimeSpan.Zero : before;
-
 			if (!unlimited && Channels > 0 && Process.Count >= Channels)
 				Wait.Enqueue(new CPEvent(this, e.Team, e.Time));
 			else
-				AddTeam(r, e.Team, e.Time + prepare, TimeSpan.Zero);
+				AddTeam(r, e.Team, e.Time + Before, TimeSpan.Zero);
 		}
 
 		protected void AddTeam(Random r, Team t, DateTime when, TimeSpan wait)
@@ -189,7 +206,7 @@ namespace CrossPohod
 			
 			// логируем
 			BaseInfo bi = new BaseInfo(dur, wait, reject);
-			t.AddPhase(this, bi);
+			t.AddPhase(this, bi, Before + After);
 			PhaseTeamInfo pi = new PhaseTeamInfo(t, bi);
 			if (PType == PhaseType.Finish)
 				pi.When = when + dur;
@@ -198,29 +215,29 @@ namespace CrossPohod
 
 			var evt = new CPEvent(this, t, when + dur);
 			Process.Add(evt);
-			CheckLeave(evt);			
+			CheckLeave(evt);		
 		}
 
-		public void AddToStart(Random r, Team t, DateTime time)	// время старта!!!
+		public void AddToStart(Random r, Team t, DateTime when)	// время старта!!!
 		{
-			var ts = NextMoment(r, t);
-			if (ts > Times.Max)
-				ts = Times.Max;									// на старте нет снятий :)
+			var dur = NextMoment(r, t);
+			if (dur > Times.Max)
+				dur = Times.Max;									// на старте нет снятий :)
 
-			var evt = new CPEvent(this, t, time+ts);
+			var evt = new CPEvent(this, t, when+dur);
 			Process.Add(evt);
 
-			BaseInfo bi = new BaseInfo(ts, TimeSpan.Zero, false);
-			t.AddPhase(this, bi);
-			Info.Add(new PhaseTeamInfo(t, bi) {When = time});
+			BaseInfo bi = new BaseInfo(dur, TimeSpan.Zero, false);
+			t.AddPhase(this, bi, Before + After);
+			Info.Add(new PhaseTeamInfo(t, bi) {When = when});
 
-			if (m_when == DateTime.MaxValue || m_when > time)
+			if (m_when == DateTime.MaxValue || m_when > when)
 			{
 				m_when = evt.Time;
 				m_next = evt;
 			}
 
-			CheckStart(time);
+			CheckStart(when);
 		}
 
 		public PhaseTeamInfo GetTeamInfo(Team t)
@@ -255,26 +272,14 @@ namespace CrossPohod
 			return GetStat().PrintStat(Name, n, level, Times.Max);
 		}
 
-		public void PrintDetailStat(TextWriter tw, IEnumerable<Team> teams)
+		protected virtual void DetailStatHead(TextWriter tw, StringBuilder sb)
 		{
-			StringBuilder sb = new StringBuilder();
+			tw.Write(Name + "\tотсечка");
+			sb.AppendFormat("\tработа");
+		}
 
-			switch (PType)
-			{ 
-				case PhaseType.Start:
-					tw.Write(Name + "\tВремя старта");
-					sb.AppendFormat("\tработа");
-					break;
-				case PhaseType.Finish:
-					tw.Write(Name + "\tработа");
-					sb.AppendFormat("\tВремя финиша");
-					break;
-				default:
-					tw.Write(Name + "\tотсечка");
-					sb.AppendFormat("\tработа");
-					break;
-			}
-
+		public void DetailStatBody(TextWriter tw, StringBuilder sb, IEnumerable<Team> teams)
+		{
 			PhaseTeamInfo info;
 			foreach (var t in teams)
 			{
@@ -287,33 +292,25 @@ namespace CrossPohod
 					sb.Append("\t");
 				}
 			}
-			tw.WriteLine();
-			tw.WriteLine(sb.ToString());
-			if (PType == PhaseType.Finish)
-				tw.WriteLine();
 		}
 
-		protected void PrintTeamStat(TextWriter tw, StringBuilder sb, PhaseTeamInfo info)
+		public virtual void PrintDetailStat(TextWriter tw, IEnumerable<Team> teams)
 		{
-			switch(PType) 
-			{
-				case PhaseType.Start:
-					tw.Write("\t{0}", info.When.TimeOfDay);
-					sb.AppendFormat("\t{0}", info.Time);
-					break;
-				
-				case PhaseType.Finish:
-					tw.Write("\t{0}", info.Time);
-					sb.AppendFormat("\t{0}", info.When.TimeOfDay);
-					break;
+			StringBuilder sb = new StringBuilder();
 
-				default:
-					tw.Write("\t");
-					if (info.Wait != TimeSpan.Zero)
-						tw.Write("{0}", info.Wait);
-					sb.AppendFormat("\t{0}", info.Time);
-					break;
-			}
+			DetailStatHead(tw, sb);
+			DetailStatBody(tw, sb, teams);
+			
+			tw.WriteLine();
+			tw.WriteLine(sb.ToString());
+		}
+
+		protected virtual void PrintTeamStat(TextWriter tw, StringBuilder sb, PhaseTeamInfo info)
+		{
+			tw.Write("\t");
+			if (info.Wait != TimeSpan.Zero)
+				tw.Write("{0}", info.Wait);
+			sb.AppendFormat("\t{0}", info.Time);
 		}
 
 		public static void PrintDetailStatHeader(TextWriter tw, IEnumerable<Team>teams)
@@ -363,6 +360,46 @@ namespace CrossPohod
 			NewRandom -= N / 2;
 
 			return NewRandom * afDeviation * afExpected + afExpected;
+		}
+	}
+
+	public class StartNode : Node
+	{
+		public StartNode(Phase p) : base(p) { }
+
+		protected override void DetailStatHead(TextWriter tw, StringBuilder sb)
+		{
+			tw.Write(Name + "\tВремя старта");
+			sb.AppendFormat("\tработа");
+		}
+
+		protected override void PrintTeamStat(TextWriter tw, StringBuilder sb, PhaseTeamInfo info)
+		{
+			tw.Write("\t{0}", info.When.TimeOfDay);
+			sb.AppendFormat("\t{0}", info.Time);
+		}
+	}
+
+	public class FinishNode : Node
+	{
+		public FinishNode(Phase p) : base(p) { }
+
+		protected override void DetailStatHead(TextWriter tw, StringBuilder sb)
+		{
+			tw.Write(Name + "\tработа");
+			sb.AppendFormat("\tВремя финиша");
+		}
+
+		public override void PrintDetailStat(TextWriter tw, IEnumerable<Team> teams)
+		{
+			base.PrintDetailStat(tw, teams);
+			tw.WriteLine();
+		}
+
+		protected override void PrintTeamStat(TextWriter tw, StringBuilder sb, PhaseTeamInfo info)
+		{
+			tw.Write("\t{0}", info.Time);
+			sb.AppendFormat("\t{0}", info.When.TimeOfDay);
 		}
 	}
 

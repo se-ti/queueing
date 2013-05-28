@@ -50,9 +50,9 @@ namespace CrossPohod
 			Smartness = 0.5;
 		}
 
-		public void AddPhase(Phase p, BaseInfo bi)
+		public void AddPhase(Phase p, BaseInfo bi, TimeSpan transit)
 		{
-			Info.Add(new TeamPhaseInfo(p, bi));
+			Info.Add(new TeamPhaseInfo(p, bi, transit));
 		}
 
 		public TeamStat GetStat(int day)
@@ -101,11 +101,12 @@ namespace CrossPohod
 	{
 		public DateTime Start = DateTime.MinValue; 
 		public TimeSpan Time = TimeSpan.Zero;
+		public TimeSpan Transit = TimeSpan.Zero;
 		public TimeSpan Wait = TimeSpan.Zero;
 		
 		public TimeSpan Total
 		{
-			get { return Time + Wait; }
+			get { return Time + Wait + Transit; }
 		}
 
 		public DateTime Finish
@@ -132,6 +133,7 @@ namespace CrossPohod
 			foreach (var i in info)
 			{
 				Time += i.Time;
+				Transit += i.Transit;
 				Wait += i.Wait;
 				if (i.Reject)
 				{
@@ -162,6 +164,7 @@ namespace CrossPohod
 			r.Start = a.Start != DateTime.MinValue ? a.Start : b.Start;
 
 			r.Time = a.Time + b.Time;
+			r.Transit = a.Transit + b.Transit;
 			r.Wait = a.Wait + b.Wait;
 			r.Reject = a.Reject + b.Reject;
 			r.Waits = a.Waits + b.Waits;
@@ -174,12 +177,12 @@ namespace CrossPohod
 		public static string StatHeader(bool reduced)
 		{
 			return reduced ? 
-				"Cтарт\tРабота\tОтсечек\tНа отс.\tСнятий\t" :
-				"Работа\tОтсечек\tНа отс.\tСнятий\tСнятия\tОтсечки\t";
+				"Cтарт\tРабота\tТранзитка\tОтсечек\tНа отс.\tСнятий\t" :
+				"Работа\tТранзитка\tОтсечек\tНа отс.\tСнятий\tСнятия\tОтсечки\t";
 		}
 		public string ToString(bool reduced)
 		{
-			string s = String.Format("{0}\t{1}\t{2}\t{3}", Time.ToString(), Waits, Wait.ToString(), Reject);
+			string s = String.Format("{0}\t{1}\t{2}\t{3}\t{4}", Time.ToString(), Transit.ToString(), Waits, Wait.ToString(), Reject);
 
 			return reduced ? String.Format("{0}\t{1}", Start.TimeOfDay, s) : String.Format("{0}\t{1}\t{2}", s, RejectComment, WaitComment);
 		}
