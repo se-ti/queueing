@@ -48,7 +48,7 @@
       			<Times Min="15" Mean="40" Max="0"/>
 		</Phase>
 		<Phase Name="Перегон2А" Channels="0" PType="Pass">
-      			<Times Min="20" Mean="40" Max="60"/>
+      			<Times Min="20" Mean="40" Max="0"/>
 		</Phase>
 		<Phase Name="Закрытый ледник" Channels="4">
       			<Times Min="10" Mean="20" Max="40"/>
@@ -76,20 +76,20 @@
 		</Phase>
 
 		<Phase Name="Перегон3А" Channels="0" PType="Pass">
-      			<Times Min="20" Mean="40" Max="60"/>
+      			<Times Min="20" Mean="40" Max="0"/>
 		</Phase>
 
 		<Phase Name="Транспортировка А" Channels="3">
       			<Times Min="26" Mean="54" Max="60"/>
 		</Phase>
 		<Phase Name="Перегон4А" Channels="0" PType="Pass">
-      			<Times Min="20" Mean="40" Max="60"/>
+      			<Times Min="20" Mean="40" Max="0"/>
 		</Phase>
 		<Phase Name="Протяженный А" Channels="3">
       			<Times Min="20" Mean="40" Max="60"/>
 		</Phase>
 		<Phase Name="Перегон5А" Channels="0" PType="Pass">
-      			<Times Min="20" Mean="40" Max="60"/>
+      			<Times Min="20" Mean="40" Max="0"/>
 		</Phase>
 
 		<Phase Name="Бивак" Channels="0" PType="Finish">
@@ -120,7 +120,7 @@
 			<Times Min="15" Mean="35" Max="60"/>
 		</Phase>
 		<Phase Name="Перегон 04Б" Channels="0" PType="Pass">
-			<Times Min="5" Mean="15" Max="25"/>
+			<Times Min="5" Mean="15" Max="0"/>
 		</Phase>
 		<Phase Name="Легкий" Channels="2">
 			<Times Min="10" Mean="25" Max="40"/>
