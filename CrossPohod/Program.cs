@@ -29,6 +29,7 @@ namespace CrossPohod
 
 		public int Times = 1;
 		public TimeSpan Start = TimeSpan.MinValue;
+		public bool SmartStart = false;
 
 
 		public static ProgramParams Parse(string[] args)
@@ -59,6 +60,8 @@ namespace CrossPohod
 
 				if ("-u" == arg || "-unlim" == arg)
 					res.Unlimited = true;
+				else if ("-sm" == arg || "-smart" == arg)
+					res.SmartStart = true;
 				else if ("-l" == arg || "-level" == arg)
 				{
 					if (i >= args.Length)
@@ -73,10 +76,11 @@ namespace CrossPohod
 						throw new CPException("Уровень квантилей вне диапазона (0; 1]", l);
 					res.Level = l;
 				}
-				if ("-p" == arg || "-prepare" == arg)
+				else if ("-t" == arg || "-transit" == arg)
 				{
 					res.Before = new TimeSpan(0, 3, 0);
 					res.After = new TimeSpan(0, 5, 0);
+					throw new CPException("Ключ -t временно не поддерживается");
 				}
 				else if ("-s" == arg || "-start" == arg)
 				{
@@ -131,7 +135,7 @@ namespace CrossPohod
 					mod.Model(r);
 					mod.RetrieveTeamStat(0);
 
-					Program.StartDay2(r, mod.Nodes["Старт2"], mod.Teams, DateTime.MinValue.AddDays(1.25));
+					Program.StartDay2(r, mod.Nodes["Старт2"], mod.Teams, DateTime.MinValue.AddDays(1.25), param.SmartStart);
 					mod.Model(r);
 					mod.RetrieveTeamStat(1);
 
@@ -173,25 +177,18 @@ namespace CrossPohod
 		public static void PrintSyntax()
 		{
 			Console.WriteLine("Syntax:");
-			Console.WriteLine("crosspohod config.xml out.csv [NNN] [-unlim] [-s h:mm] [-l lev] [-p]");
+			Console.WriteLine("crosspohod config.xml out.csv [NNN] [-unlim] [-s h:mm] [-l lev] [-t] [-sm]");
 			Console.WriteLine("\tNNN\tчисло повторений, значение по умолчанию 1");
 			Console.WriteLine("\nSwitches:");
 			Console.WriteLine("\tl level\tуровень квантилей. Значение по умолчанию 0,95. Например: -l 0,9");
-			Console.WriteLine("\tp prepare\tдобавлять время на подготовку и сборы до и после тех. этапов");
 			Console.WriteLine("\ts start\tначало работы старта 1 дня. Например: -s 6:20");
+			Console.WriteLine("\tsm smart\tхитрый старт второго дня");
+			Console.WriteLine("\tt transit\tдобавлять время на подготовку и сборы до и после тех. этапов");
 			Console.WriteLine("\tu unlim\tрежим оценки необходимой пропускной способности");
 		}
 
-		public static void StartDay1(Random r, Node n, List<Team> teams, DateTime start)
+		private static List<Team> JoinLists(List<Team> a, List<Team>b)
 		{
-			List<Team> a = teams.Where(t => t.Grade >= 2)
-								.OrderBy(t => r.Next())			// shuffle!
-								.ToList();
-			List<Team> b = teams.Where(t => t.Grade < 2)
-								.OrderBy(t => r.Next())
-								.ToList();
-
-			
 			List<Team> join = new List<Team>();
 			while (a.Any() && b.Any())
 			{
@@ -207,42 +204,71 @@ namespace CrossPohod
 			if (b.Any())
 				join.AddRange(b);
 
+			return join;
+		}
+
+		public static void StartDay1(Random r, Node n, List<Team> teams, DateTime start)
+		{
+			List<Team> a = teams.Where(t => t.Grade >= 2)
+								.OrderBy(t => r.Next())			// shuffle!
+								.ToList();
+			List<Team> b = teams.Where(t => t.Grade < 2)
+								.OrderBy(t => r.Next())
+								.ToList();
+
 			int i = 0;
-			foreach (var t in join)
+			int channels = n.Channels > 0 ? n.Channels : 1;
+			foreach (var t in JoinLists(a, b))
 			{
 				n.AddToStart(r, t, start);
 				t.SetStart(start);
 
 				i++;
-				if (i % n.Channels == 0)
+				if (i % channels == 0)
 					start += n.Times.Max;
 			}
 
 		}
 
-		public static void StartDay2(Random r, Node n, List<Team> teams, DateTime start)
+		public static void StartDay2(Random r, Node n, List<Team> teams, DateTime start, bool smart)
 		{
-			List<Team> a = teams.Where(t => t.Grade >= 2).OrderBy(t => t.GetStat(0).Time.TotalSeconds).ToList();
-			List<Team> b = teams.Where(t => t.Grade < 2).OrderBy(t => t.GetStat(0).Time.TotalSeconds).ToList();
+			int APlus = 2;
+			List<Team> a = teams.Where(t => t.Grade >= APlus)
+								.OrderBy(t => t.GetStat(0).Work.TotalSeconds)
+								.ToList();
+			List<Team> b = teams.Where(t => t.Grade < APlus)
+								.OrderBy(t => t.GetStat(0).Work.TotalSeconds)
+								.ToList();
 
-			while (a.Any() && b.Any())
+			int i = 0;
+			int channels = n.Channels > 0 ? n.Channels : 1;
+			foreach (var t in JoinLists(a, b))
 			{
-				Program.AddTeam(r, n, a, start);
-				Program.AddTeam(r, n, b, start);
+				n.AddToStart(r, t, start);
+				t.SetStart(start);
 
-				start += n.Times.Max;
+				i++;
+				start = Start(smart, start, i, channels, n.Times.Max);
 			}
+		}
 
-			if (b.Any())	//
-				a = b;
+		private static DateTime Start(bool smart, DateTime current, int idx, int channels, TimeSpan shift)
+		{
+			TimeSpan sh = TimeSpan.Zero;
 
-			while (a.Any())
+			if (smart)
 			{
-				Program.AddTeam(r, n, a, start);
-				if (a.Any())
-					Program.AddTeam(r, n, a, start);
-				start += n.Times.Max;
+				if (idx > channels && idx % channels == 0)
+				{
+					sh = shift;
+					if (idx <= 2 * channels)
+						sh += shift;
+				}
 			}
+			else if (idx % channels == 0)
+				sh = shift;
+
+			return current + sh;
 		}
 
 		public static void AddTeam(Random r, Node n, List<Team> teams, DateTime t)

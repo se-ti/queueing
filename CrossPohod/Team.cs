@@ -106,7 +106,12 @@ namespace CrossPohod
 		
 		public TimeSpan Total
 		{
-			get { return Time + Wait + Transit; }
+			get { return Time + Transit + Wait; }
+		}
+
+		public TimeSpan Work
+		{
+			get { return Time + Transit; }
 		}
 
 		public DateTime Finish

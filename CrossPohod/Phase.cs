@@ -168,7 +168,7 @@ namespace CrossPohod
 			if (Wait.Any())
 			{
 				var e = Wait.Dequeue();
-				TimeSpan prepare = Before;
+				TimeSpan prepare = new TimeSpan(Before.Ticks);
 				TimeSpan wait = evt.Time - e.Time;
 
 				if (prepare > TimeSpan.Zero)	// этап только освободился, а мы уже готовы
@@ -278,7 +278,7 @@ namespace CrossPohod
 			sb.AppendFormat("\tработа");
 		}
 
-		public void DetailStatBody(TextWriter tw, StringBuilder sb, IEnumerable<Team> teams)
+		protected void DetailStatBody(TextWriter tw, StringBuilder sb, IEnumerable<Team> teams)
 		{
 			PhaseTeamInfo info;
 			foreach (var t in teams)
