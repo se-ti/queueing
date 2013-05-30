@@ -258,11 +258,12 @@ namespace CrossPohod
 
 			if (smart)
 			{
-				if (idx > channels && idx % channels == 0)
+				int quant = 3;
+				if (idx > (quant-1) *channels && idx % channels == 0)
 				{
 					sh = shift;
-					if (idx <= 2 * channels)
-						sh += shift;
+					if (idx <= quant * channels)
+						sh += new TimeSpan((quant-1)*shift.Ticks);
 				}
 			}
 			else if (idx % channels == 0)
