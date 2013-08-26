@@ -8,17 +8,33 @@ using System.Xml.Serialization;
 
 namespace CrossPohod
 {
-	public class CPEvent
+    public enum EventType
+    { 
+        Appear,
+        Start,
+        End,
+        Leave
+    }
+
+    public class CPEvent
 	{
 		public DateTime Time;
 		public Team Team;
 		public Node Node;
+        public EventType EType;
 
-		public CPEvent(Node node, Team team, DateTime time)
+        [Obsolete]
+        public CPEvent(Node node, Team team, DateTime time): this(node, team, time, EventType.Leave)
+        { 
+        
+        }
+
+		public CPEvent(Node node, Team team, DateTime time, EventType eType)
 		{
 			Time = time;
 			Team = team;
 			Node = node;
+            EType = eType;
 		}
 	}
 

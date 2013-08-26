@@ -131,11 +131,11 @@ namespace CrossPohod
 					if (i % 10 == 9)
 						Console.WriteLine(i + 1);
 
-					Program.StartDay1(r, mod.Nodes["Старт1"], mod.Teams, DateTime.MinValue + param.Start);
+					Program.StartDay1(r, mod.Nodes["Старт1"] as StartNode, mod.Teams, DateTime.MinValue + param.Start);
 					mod.Model(r);
 					mod.RetrieveTeamStat(0);
 
-					Program.StartDay2(r, mod.Nodes["Старт2"], mod.Teams, DateTime.MinValue.AddDays(1.25), param.SmartStart);
+					Program.StartDay2(r, mod.Nodes["Старт2"] as StartNode, mod.Teams, DateTime.MinValue.AddDays(1.25), param.SmartStart);
 					mod.Model(r);
 					mod.RetrieveTeamStat(1);
 
@@ -207,8 +207,11 @@ namespace CrossPohod
 			return join;
 		}
 
-		public static void StartDay1(Random r, Node n, List<Team> teams, DateTime start)
+		public static void StartDay1(Random r, StartNode n, List<Team> teams, DateTime start)
 		{
+            if (n == null)
+                throw new CPException("Не задан стартовый этап второго дня (Старт2)");
+
 			List<Team> a = teams.Where(t => t.Grade >= 2)
 								.OrderBy(t => r.Next())			// shuffle!
 								.ToList();
@@ -230,8 +233,11 @@ namespace CrossPohod
 
 		}
 
-		public static void StartDay2(Random r, Node n, List<Team> teams, DateTime start, bool smart)
+        public static void StartDay2(Random r, StartNode n, List<Team> teams, DateTime start, bool smart)
 		{
+            if (n == null)
+                throw new CPException("Не задан стартовый этап второго дня (Старт2)");
+
 			int APlus = 2;
 			List<Team> a = teams.Where(t => t.Grade >= APlus)
 								.OrderBy(t => t.GetStat(0).Work.TotalSeconds)
@@ -272,7 +278,7 @@ namespace CrossPohod
 			return current + sh;
 		}
 
-		public static void AddTeam(Random r, Node n, List<Team> teams, DateTime t)
+        public static void AddTeam(Random r, StartNode n, List<Team> teams, DateTime t)
 		{
 			var team = teams.First();
 			n.AddToStart(r, team, t);

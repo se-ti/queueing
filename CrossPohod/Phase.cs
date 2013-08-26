@@ -218,28 +218,6 @@ namespace CrossPohod
 			CheckLeave(evt);		
 		}
 
-		public void AddToStart(Random r, Team t, DateTime when)	// время старта!!!
-		{
-			var dur = NextMoment(r, t);
-			if (dur > Times.Max)
-				dur = Times.Max;									// на старте нет снятий :)
-
-			var evt = new CPEvent(this, t, when+dur);
-			Process.Add(evt);
-
-			BaseInfo bi = new BaseInfo(dur, TimeSpan.Zero, false);
-			t.AddPhase(this, bi, Before + After);
-			Info.Add(new PhaseTeamInfo(t, bi) {When = when});
-
-			if (m_when == DateTime.MaxValue || m_when > when)
-			{
-				m_when = evt.Time;
-				m_next = evt;
-			}
-
-			CheckStart(when);
-		}
-
 		public PhaseTeamInfo GetTeamInfo(Team t)
 		{
 			return Info.FirstOrDefault( i => i.Team == t);
@@ -378,6 +356,28 @@ namespace CrossPohod
 			tw.Write("\t{0}", info.When.TimeOfDay);
 			sb.AppendFormat("\t{0}", info.Time);
 		}
+
+        public void AddToStart(Random r, Team t, DateTime when)	// время старта!!!
+        {
+            var dur = NextMoment(r, t);
+            if (dur > Times.Max)
+                dur = Times.Max;									// на старте нет снятий :)
+
+            var evt = new CPEvent(this, t, when + dur, EventType.Leave);
+            Process.Add(evt);
+
+            BaseInfo bi = new BaseInfo(dur, TimeSpan.Zero, false);
+            t.AddPhase(this, bi, Before + After);
+            Info.Add(new PhaseTeamInfo(t, bi) { When = when });
+
+            if (m_when == DateTime.MaxValue || m_when > when)
+            {
+                m_when = evt.Time;
+                m_next = evt;
+            }
+
+            CheckStart(when);
+        }
 	}
 
 	public class FinishNode : Node
