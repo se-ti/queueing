@@ -117,8 +117,8 @@ namespace CrossPohod
 			Links[grade] = phase;
 		}
 
-		protected List<CPEvent> Process = new List<CPEvent>();
-		protected Queue<CPEvent> Wait = new Queue<CPEvent>();
+		protected List<CPEvent> Process = new List<CPEvent>();  // Список событий. Пока -- моментов финиша на этапе
+		protected Queue<CPEvent> Wait = new Queue<CPEvent>();   // Очередь ожидания отсечки на этапе.
 
 		protected DateTime m_when = DateTime.MaxValue;
 		public DateTime When { get { return m_when; } }
@@ -148,6 +148,17 @@ namespace CrossPohod
 			}
 		}
 
+        public virtual void ProcessEvent(Random r, CPEvent evt, bool unlimited)
+        {
+            TeamLeave(r, evt);
+
+            Node next;
+            Links.TryGetValue(evt.Team.Grade, out next);
+            if (next == null)
+                throw new Exception(String.Format("Обрыв цепочки на этапе '{0}', PType='{1}', для класса {2}", Name, PType, evt.Team.Grade));
+
+            next.Appear(r, evt.Team, evt.Time + After, unlimited);
+        }
 		public void TeamLeave(Random r, CPEvent evt)
 		{
 			if (!Process.Remove(evt))
@@ -178,25 +189,26 @@ namespace CrossPohod
 					prepare -= min;
 				}
 
-				AddTeam(r, e.Team, evt.Time + prepare, wait);
+				StartWork(r, e.Team, evt.Time + prepare, wait);
 			}
 		}
 
-		public void AddTeam(Random r, CPEvent e, bool unlimited)
+        // команда появляется на этапе
+        public void Appear(Random r, Team team, DateTime when, bool unlimited)  
 		{
-			CheckStart(e.Time);
+			CheckStart(when);
 
 			int load = Wait.Count + Process.Count + 1;
 			if (load > m_maxLoad)
 				m_maxLoad = load;
 
 			if (!unlimited && Channels > 0 && Process.Count >= Channels)
-				Wait.Enqueue(new CPEvent(this, e.Team, e.Time));
+				Wait.Enqueue(new CPEvent(this, team, when));
 			else
-				AddTeam(r, e.Team, e.Time + Before, TimeSpan.Zero);
+				StartWork(r, team, when + Before, TimeSpan.Zero);
 		}
 
-		protected void AddTeam(Random r, Team t, DateTime when, TimeSpan wait)
+		protected void StartWork(Random r, Team t, DateTime when, TimeSpan wait)
 		{
 			TimeSpan dur = NextMoment(r, t);
 
@@ -223,7 +235,8 @@ namespace CrossPohod
 			return Info.FirstOrDefault( i => i.Team == t);
 		}
 
-		public void EndOfTurn()
+        #region basic stat
+        public void EndOfTurn()
 		{
 			if (m_maxLoad == 0 && m_start == DateTime.MaxValue)	// nothing happened since last call;
 				return; 
@@ -338,8 +351,10 @@ namespace CrossPohod
 			NewRandom -= N / 2;
 
 			return NewRandom * afDeviation * afExpected + afExpected;
-		}
-	}
+        }
+
+        #endregion
+    }
 
 	public class StartNode : Node
 	{
@@ -401,6 +416,11 @@ namespace CrossPohod
 			tw.Write("\t{0}", info.Time);
 			sb.AppendFormat("\t{0}", info.When.TimeOfDay);
 		}
+
+        public override void ProcessEvent(Random r, CPEvent evt, bool unlimited)
+        {
+            TeamLeave(r, evt);
+        }
 	}
 
 	public class PhaseStat

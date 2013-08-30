@@ -109,33 +109,36 @@ namespace CrossPohod
 		{
 			tw.WriteLine();
 
-			if (num > 1)
+			if (num == 1)
+                SinglePassPhaseStat(tw);
+            else
 			{
 				tw.WriteLine(Node.PrintHeader(Level));
 				foreach (var node in Nodes.Values.Where(n => n.PType != PhaseType.Pass))
 					tw.WriteLine(node.PrintStat(num, Level));
 			}
-			else
-			{
-				List<Team> teams = null;
-				foreach (var node in Nodes.Values)
-				{
-					if (node.PType == PhaseType.Start || teams == null)
-					{
-						if (node.PType == PhaseType.Start)
-							teams = Teams.OrderBy(t => t.Grade)
-										 .ThenBy(t => { var i = node.GetTeamInfo(t); return i != null ? i.When : DateTime.MaxValue; })
-										 .ToList();
-						else
-							teams = Teams;
-						
-						Node.PrintDetailStatHeader(tw, teams);
-					}
-
-					node.PrintDetailStat(tw, teams);
-				}
-			}
 		}
+
+        private void SinglePassPhaseStat(TextWriter tw)
+        {
+            List<Team> teams = null;
+            foreach (var node in Nodes.Values)
+            {
+                if (node.PType == PhaseType.Start || teams == null)
+                {
+                    if (node.PType == PhaseType.Start)
+                        teams = Teams.OrderBy(t => t.Grade)
+                                     .ThenBy(t => { var i = node.GetTeamInfo(t); return i != null ? i.When : DateTime.MaxValue; })
+                                     .ToList();
+                    else
+                        teams = Teams;
+
+                    Node.PrintDetailStatHeader(tw, teams);
+                }
+
+                node.PrintDetailStat(tw, teams);
+            }
+        }
 
 		public void Model(Random r)
 		{
@@ -151,17 +154,7 @@ namespace CrossPohod
 
 		protected void Process(Random r, CPEvent pe)
 		{
-			pe.Node.TeamLeave(r, pe);
-
-			if (pe.Node.PType == PhaseType.Finish)
-				return;
-
-			Node next;
-			pe.Node.Links.TryGetValue(pe.Team.Grade, out next);
-			if (next == null )
-				throw new Exception(String.Format("Обрыв цепочки на этапе '{0}', PType='{1}', для класса {2}", pe.Node.Name, pe.Node.PType, pe.Team.Grade));
-
-			next.AddTeam(r, new CPEvent(pe.Node, pe.Team, pe.Time + pe.Node.After) , Unlimited);
+            pe.Node.ProcessEvent(r, pe, Unlimited);
 		}
 
 		protected CPEvent GetEvent()
