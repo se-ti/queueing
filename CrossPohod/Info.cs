@@ -111,7 +111,7 @@ namespace CrossPohod
 				return "0\t0\t0\t0\t0";
 
 			Stat<TimeSpan, TimeSpan, long> stat = new Stat<TimeSpan, TimeSpan, long>(all, ts => ts, ts => ts.Ticks);
-			return string.Format("{0}\t{1}\t{2}\t{3}\t{4}", Min, stat.Min(0.5 + level/2), stat.Max(0.5 + level/2), Max, Mean);
+            return string.Format("{0:h\\:mm}\t{1:h\\:mm}\t{2:h\\:mm}\t{3:h\\:mm}\t{4}", Min, stat.Min(0.5 + level / 2), stat.Max(0.5 + level / 2), Max, Mean);
 		}
 
 	}

@@ -415,8 +415,8 @@ namespace CrossPohod
 		{
 			tw.Write("\t");
 			if (info.Wait != TimeSpan.Zero)
-				tw.Write("{0}", info.Wait);
-			sb.AppendFormat("\t{0}", info.Time);
+				tw.Write("{0:h\\:mm}", info.Wait);
+			sb.AppendFormat("\t{0:h\\:mm}", info.Time);
 		}
 
 		public static void PrintDetailStatHeader(TextWriter tw, IEnumerable<Team>teams)
@@ -488,8 +488,8 @@ namespace CrossPohod
 
 		protected override void PrintTeamStat(TextWriter tw, StringBuilder sb, PhaseTeamInfo info)
 		{
-			tw.Write("\t{0}", info.When.TimeOfDay);
-			sb.AppendFormat("\t{0}", info.Time);
+			tw.Write("\t{0:h\\:mm}", info.When.TimeOfDay);
+			sb.AppendFormat("\t{0:h\\:mm}", info.Time);
 		}
 
         protected override void OnStart(Random r, LogItem item)
@@ -497,29 +497,6 @@ namespace CrossPohod
             base.OnStart(r, item);
             item.Reject = false;    // на старте нет снятий :)
         }
-
-        /*
-        public void AddToStart(Random r, Team t, DateTime when)	// время старта!!!
-        {
-            var dur = NextMoment(r, t);
-            if (dur > Times.Max)
-                dur = Times.Max;									// на старте нет снятий :)
-
-            var evt = new CPEvent(this, t, when + dur, EventType.Leave);
-            Process.Add(evt);
-
-            BaseInfo bi = new BaseInfo(dur, TimeSpan.Zero, false);
-            t.AddPhase(this, bi, Before + After);
-            Info.Add(new PhaseTeamInfo(t, bi) { When = when });
-
-            if (m_when == DateTime.MaxValue || m_when > when)
-            {
-                m_when = evt.Time;
-                m_next = evt;
-            }
-
-            CheckStart(when);
-        }*/
 	}
 
 	public class FinishNode : Node
@@ -540,8 +517,8 @@ namespace CrossPohod
 
 		protected override void PrintTeamStat(TextWriter tw, StringBuilder sb, PhaseTeamInfo info)
 		{
-			tw.Write("\t{0}", info.Time);
-			sb.AppendFormat("\t{0}", info.When.TimeOfDay);
+			tw.Write("\t{0:h\\:mm}", info.Time);
+			sb.AppendFormat("\t{0:h\\:mm}", info.When.TimeOfDay);
 		}
 
         protected override void LogTeam(LogItem item)
@@ -599,7 +576,7 @@ namespace CrossPohod
 			Stat<PhaseInfo, TimeSpan, long> start = new Stat<PhaseInfo, TimeSpan, long>(PInfo, p => p.Start.TimeOfDay, p => p.Start.Ticks);
 			Stat<PhaseInfo, TimeSpan, long> end   = new Stat<PhaseInfo, TimeSpan, long>(PInfo, p => p.End.TimeOfDay,   p => p.End.Ticks);
 
-			return String.Format("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\t{8}\t{9}\t{10}\t{11}\t{12}", name, Teams / n, load.Max(), load.Max(level), start.Min(), start.Min(level), end.Max(level), end.Max(), Time.Print(level), Div(Wait.Num, n), Wait.Print(level), Div(Rejects, n), max != TimeSpan.Zero ? max.ToString() : "");
+            return String.Format("{0}\t{1}\t{2}\t{3}\t{4:h\\:mm}\t{5:h\\:mm}\t{6:h\\:mm}\t{7:h\\:mm}\t{8}\t{9}\t{10}\t{11}\t{12}", name, Teams / n, load.Max(), load.Max(level), start.Min(), start.Min(level), end.Max(level), end.Max(), Time.Print(level), Div(Wait.Num, n), Wait.Print(level), Div(Rejects, n), max != TimeSpan.Zero ? max.ToString(@"h\:mm") : "");
 		}
 
 		private static decimal Div(int n, int m)

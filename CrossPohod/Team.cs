@@ -187,9 +187,9 @@ namespace CrossPohod
 		}
 		public string ToString(bool reduced)
 		{
-			string s = String.Format("{0}\t{1}\t{2}\t{3}\t{4}", Time.ToString(), Transit.ToString(), Waits, Wait.ToString(), Reject);
+			string s = String.Format("{0:h\\:mm}\t{1:h\\:mm}\t{2}\t{3:h\\:mm}\t{4}", Time, Transit, Waits, Wait, Reject);
 
-			return reduced ? String.Format("{0}\t{1}", Start.TimeOfDay, s) : String.Format("{0}\t{1}\t{2}", s, RejectComment, WaitComment);
+			return reduced ? String.Format("{0:h\\:mm}\t{1}", Start.TimeOfDay, s) : String.Format("{0}\t{1}\t{2}", s, RejectComment, WaitComment);
 		}
 	}
 }
