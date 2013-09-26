@@ -25,6 +25,11 @@ namespace CrossPohod
 			Wait = wait;
 			Reject = reject;
 		}
+
+        public BaseInfo(LogItem item): 
+            this(item.Work, item.Wait, item.Reject)
+        { 
+        }
 	}
 
 	public class TeamPhaseInfo : BaseInfo
@@ -43,11 +48,11 @@ namespace CrossPohod
 	{
 		public Team Team;
 		public DateTime When;
-		public PhaseTeamInfo(Team team, BaseInfo bi)
-			: base(bi)
+		public PhaseTeamInfo(LogItem item)
+			: base(item)
 		{
-			Team = team;
-			When = DateTime.MinValue;
+			Team = item.Team;
+			When = item.Appear;
 		}
 	}
 

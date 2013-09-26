@@ -50,9 +50,9 @@ namespace CrossPohod
 			Smartness = 0.5;
 		}
 
-		public void AddPhase(Phase p, BaseInfo bi, TimeSpan transit)
+		public void AddPhase(Phase p, LogItem item)
 		{
-			Info.Add(new TeamPhaseInfo(p, bi, transit));
+			Info.Add(new TeamPhaseInfo(p, new BaseInfo(item), item.Before + item.After));
 		}
 
 		public TeamStat GetStat(int day)

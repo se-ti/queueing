@@ -30,6 +30,13 @@ namespace CrossPohod
 		[XmlAttribute]
 		public double Sigma;
 
+
+        [XmlIgnore]
+        public TimeSpan Before;
+        [XmlIgnore]
+        public TimeSpan After;
+
+
 		[XmlAttribute("Min")]
 		public int XmlMin
 		{
@@ -51,12 +58,28 @@ namespace CrossPohod
 			set { Max = new TimeSpan(0, value, 0); }
 		}
 
+        [XmlAttribute("Before")]
+        public int XmlBefore
+        {
+            get { return Convert.ToInt32(Before.TotalMinutes); }
+            set { Before = new TimeSpan(0, value, 0); }
+        }
+
+        [XmlAttribute("After")]
+        public int XmlAfter
+        {
+            get { return Convert.ToInt32(After.TotalMinutes); }
+            set { After = new TimeSpan(0, value, 0); }
+        }
+
 		public PhaseParam()
 		{
 			Min = TimeSpan.Zero;
 			Mean = TimeSpan.Zero;
 			Max = TimeSpan.Zero;
 			Sigma = 0.2;
+            Before = TimeSpan.Zero;
+            After = TimeSpan.Zero;
 		}
 	}
 
@@ -83,12 +106,6 @@ namespace CrossPohod
 
 		[XmlAttribute]
 		public PhaseType PType = PhaseType.Tech;
-
-		// времена на подготовку до и после этапов
-		[XmlIgnore]	
-		public TimeSpan Before = TimeSpan.Zero;
-		[XmlIgnore]
-		public TimeSpan After = TimeSpan.Zero;
 	}
 
 	#endregion
@@ -106,6 +123,30 @@ namespace CrossPohod
 		}
 	}
 
+    public class LogItem
+    {
+        public DateTime Appear = DateTime.MinValue;
+        public TimeSpan Before = TimeSpan.Zero;
+        public TimeSpan Wait = TimeSpan.Zero;
+        public TimeSpan Work = TimeSpan.Zero;
+        public TimeSpan After = TimeSpan.Zero;
+        public bool Reject = false;
+
+        public CPEvent evt;
+
+        public LogItem(CPEvent e)
+        {
+            Appear = e.Time;
+            evt = e;
+        }
+
+        public Team Team { get { return evt.Team; } }
+        
+        public DateTime Time { get { return evt.Time; } }
+
+        public bool Working { get { return evt != null && evt.EType == EventType.End; } }
+    }
+
 	public class Node: Phase
 	{
 		public Node() { }
@@ -117,20 +158,33 @@ namespace CrossPohod
 			Links[grade] = phase;
 		}
 
-		protected List<CPEvent> Process = new List<CPEvent>();  // Список событий. Пока -- моментов финиша на этапе
-		protected Queue<CPEvent> Wait = new Queue<CPEvent>();   // Очередь ожидания отсечки на этапе.
+        public void Setup(bool unlimited, bool ignoreTransit)
+        {
+            bool nonTech = PType != PhaseType.Tech;
 
-		protected DateTime m_when = DateTime.MaxValue;
-		public DateTime When { get { return m_when; } }
-		
-		protected CPEvent m_next = null;
+            Unlimited = nonTech || unlimited;
+
+            if (nonTech || ignoreTransit)
+            {
+                Times.Before = TimeSpan.Zero;
+                Times.After = TimeSpan.Zero;
+            }
+        }
+
+        protected bool Unlimited;
+
+		protected List<LogItem> Process = new List<LogItem>();  // Список событий. Пока -- моментов финиша на этапе
+		protected Queue<LogItem> Wait = new Queue<LogItem>();   // Очередь ожидания отсечки на этапе.
+
+		protected CPEvent m_next = null;                    // ближайшее событие на этапе
 		public CPEvent Next { get { return m_next; } }
 
+        // статистика текущего прогона
 		protected int m_maxLoad = 0;
 		protected DateTime m_start = DateTime.MaxValue;
 		protected DateTime m_end = DateTime.MinValue;
 
-		protected List<PhaseInfo> PInfo = new List<PhaseInfo>();
+		protected List<PhaseInfo> PInfo = new List<PhaseInfo>();    // статистика этапа по прогонам
 		protected List<PhaseTeamInfo> Info = new List<PhaseTeamInfo>();
 
 		protected void CheckStart(DateTime time)
@@ -139,100 +193,161 @@ namespace CrossPohod
 				m_start = time;
 		}
 
-		protected void CheckLeave(CPEvent evt)
+        protected void CheckEnd(DateTime time)
+        {
+            if (time > m_end)
+                m_end = time;
+        }
+
+		protected void UpdateNext()
 		{
-			if (evt.Time < When)
-			{
-				m_when = evt.Time;
-				m_next = evt;
-			}
+            m_next = null;
+            foreach (var e in Process)
+                if (m_next == null || e.Time < m_next.Time)
+                    m_next = e.evt;
 		}
 
-        public virtual void ProcessEvent(Random r, CPEvent evt, bool unlimited)
+        protected void UpdateMaxLoad()
         {
-            TeamLeave(r, evt);
+            int load = Wait.Count + Process.Count(it => it.Working);
+            if (load > m_maxLoad)
+                m_maxLoad = load;
+        }
 
+        private void AddItem(LogItem item)
+        {
+            Process.Add(item);
+            UpdateNext();
+        }
+
+        private LogItem GetItem(CPEvent evt)
+        {
+            var logItem = Process.FirstOrDefault(it => it.evt == evt);
+            if (logItem == null)
+                throw new Exception(String.Format("На этапе {0} нет команды {1}", Name, evt.Team.Name));
+            Process.Remove(logItem);
+            UpdateNext();
+            return logItem;
+        }
+        
+        public void AddTeam(Random r, Team team, DateTime when)
+        {
+            ProcessEvent(r, new CPEvent(this, team, when, EventType.Appear));
+        }
+
+        public virtual void ProcessEvent(Random r, CPEvent evt)
+        {
+            switch (evt.EType)
+            { 
+                case EventType.Appear:                  // подготовиться и встать на отсечку
+                    OnAppear(r, evt);
+                    break;
+
+                case EventType.Start:                   // стартовать
+                    OnTryStart(r, evt);
+                    break;
+
+                case EventType.End:                     // закончить работу
+                    OnEnd(r, evt);
+                    break;
+
+                case EventType.Leave:                   // потормозить в конце
+                    OnLeave(r, evt);
+                    break;
+            }
+        }
+
+        // команда появляется на этапе
+        protected virtual void OnAppear(Random r, CPEvent evt)
+        {
+            CheckStart(evt.Time);
+            var item = new LogItem(evt);
+
+            item.Before = Scale(Times.Before, item.Team.Smartness);
+            evt.EType = EventType.Start;
+            evt.Time += item.Before;
+            AddItem(item);
+        }
+
+        // команда хочет начать работать
+        protected virtual void OnTryStart(Random r, CPEvent evt)
+        {         
+            var logItem = GetItem(evt);
+
+            if (!Unlimited && Channels > 0 && Process.Count(it => it.Working) >= Channels)
+                Wait.Enqueue(logItem);
+            else
+                OnStart(r, logItem);
+
+            UpdateMaxLoad();
+        }
+
+        // команда реально начала работать
+        protected virtual void OnStart(Random r, LogItem item)
+        {
+            item.Wait = item.Time - item.Appear - item.Before;  // отсечку можно вычислить только по факту
+
+            TimeSpan dur = NextMoment(r, item.Team);
+
+            item.Reject = Times.Max != TimeSpan.Zero && dur > Times.Max;
+            if (item.Reject)
+                dur = Times.Max;
+            
+            item.Work = dur;
+
+            item.evt.Time += dur;
+            item.evt.EType = EventType.End;
+            AddItem(item);
+        }
+
+        protected virtual void OnEnd(Random r, CPEvent evt)
+        {
+            var item = GetItem(evt);
+
+            LogTeam(item);
+
+            if (Wait.Any())     // запустили первого из стоящих в очереди
+            {
+                var e = Wait.Dequeue();
+                e.evt.Time = evt.Time;
+                OnStart(r, e);
+            }
+
+            item.After = Scale(Times.After, 1.0 * item.Work.TotalMinutes / Times.Mean.TotalMinutes); // как поработали, так и тормозим
+            item.evt.Time += item.After;
+            item.evt.EType = EventType.Leave;
+            AddItem(item);        
+        }
+
+        protected virtual void OnLeave(Random r, CPEvent evt)
+        {
+            var item = GetItem(evt);
+            evt.Team.AddPhase(this, item);
+
+            ProcessNextPhase(r, evt);
+        }
+
+        private void ProcessNextPhase(Random r, CPEvent evt)
+        {
             Node next;
             Links.TryGetValue(evt.Team.Grade, out next);
             if (next == null)
                 throw new Exception(String.Format("Обрыв цепочки на этапе '{0}', PType='{1}', для класса {2}", Name, PType, evt.Team.Grade));
 
-            next.Appear(r, evt.Team, evt.Time + After, unlimited);
+            next.AddTeam(r, evt.Team, evt.Time);
         }
-		public void TeamLeave(Random r, CPEvent evt)
-		{
-			if (!Process.Remove(evt))
-				throw new Exception(String.Format("На этапе {0} нет команды {1}", Name, evt.Team.Name));
 
-			if (evt.Time > m_end)
-				m_end = evt.Time;
+        protected virtual void LogTeam(LogItem item)
+        {
+            CheckEnd(item.Time);
 
-			this.m_when = DateTime.MaxValue;
-			this.m_next = null;
-			foreach (var e in Process)
-				if (e.Time < m_when)
-				{
-					m_when = e.Time;
-					m_next = e;
-				}
-
-			if (Wait.Any())
-			{
-				var e = Wait.Dequeue();
-				TimeSpan prepare = new TimeSpan(Before.Ticks);
-				TimeSpan wait = evt.Time - e.Time;
-
-				if (prepare > TimeSpan.Zero)	// этап только освободился, а мы уже готовы
-				{
-					var min = wait < prepare ? wait : prepare;
-					wait -= min;
-					prepare -= min;
-				}
-
-				StartWork(r, e.Team, evt.Time + prepare, wait);
-			}
-		}
-
-        // команда появляется на этапе
-        public void Appear(Random r, Team team, DateTime when, bool unlimited)  
-		{
-			CheckStart(when);
-
-			int load = Wait.Count + Process.Count + 1;
-			if (load > m_maxLoad)
-				m_maxLoad = load;
-
-			if (!unlimited && Channels > 0 && Process.Count >= Channels)
-				Wait.Enqueue(new CPEvent(this, team, when));
-			else
-				StartWork(r, team, when + Before, TimeSpan.Zero);
-		}
-
-		protected void StartWork(Random r, Team t, DateTime when, TimeSpan wait)
-		{
-			TimeSpan dur = NextMoment(r, t);
-
-			bool reject = Times.Max != TimeSpan.Zero && dur > Times.Max;
-			if (reject)
-				dur = Times.Max;
-			
-			// логируем
-			BaseInfo bi = new BaseInfo(dur, wait, reject);
-			t.AddPhase(this, bi, Before + After);
-			PhaseTeamInfo pi = new PhaseTeamInfo(t, bi);
-			if (PType == PhaseType.Finish)
-				pi.When = when + dur;
-
-			Info.Add(pi); 
-
-			var evt = new CPEvent(this, t, when + dur);
-			Process.Add(evt);
-			CheckLeave(evt);		
-		}
+            PhaseTeamInfo pi = new PhaseTeamInfo(item);
+            Info.Add(pi);        
+        }
 
 		public PhaseTeamInfo GetTeamInfo(Team t)
 		{
-			return Info.FirstOrDefault( i => i.Team == t);
+			return Info.FirstOrDefault(i => i.Team == t);
 		}
 
         #region basic stat
@@ -312,6 +427,11 @@ namespace CrossPohod
 			tw.WriteLine();
 		}
 
+        protected TimeSpan Scale(TimeSpan span, double scale)
+        {
+            return new TimeSpan(0, Convert.ToInt32(span.TotalMinutes * scale), 0);
+        }
+
 		/// <param name="r">генератор равномерно распределенных случайных чисел</param>
 		/// <param name="t">командаб t.Smartness -- коэффициент быстроходности / тормознутости t.Members -- число человек</param>
 		/// <returns></returns>
@@ -372,6 +492,13 @@ namespace CrossPohod
 			sb.AppendFormat("\t{0}", info.Time);
 		}
 
+        protected override void OnStart(Random r, LogItem item)
+        {
+            base.OnStart(r, item);
+            item.Reject = false;    // на старте нет снятий :)
+        }
+
+        /*
         public void AddToStart(Random r, Team t, DateTime when)	// время старта!!!
         {
             var dur = NextMoment(r, t);
@@ -392,7 +519,7 @@ namespace CrossPohod
             }
 
             CheckStart(when);
-        }
+        }*/
 	}
 
 	public class FinishNode : Node
@@ -417,9 +544,24 @@ namespace CrossPohod
 			sb.AppendFormat("\t{0}", info.When.TimeOfDay);
 		}
 
-        public override void ProcessEvent(Random r, CPEvent evt, bool unlimited)
+        protected override void LogTeam(LogItem item)
         {
-            TeamLeave(r, evt);
+            CheckEnd(item.Time);
+
+            PhaseTeamInfo pi = new PhaseTeamInfo(item)
+            {
+                When = item.Appear + item.Before + item.Wait + item.Work
+            };
+
+            Info.Add(pi);
+        }
+
+        public override void ProcessEvent(Random r, CPEvent evt)
+        {
+            CheckStart(evt.Time);
+            var item = new LogItem(evt);
+            LogTeam(item);
+            evt.Team.AddPhase(this, item);
         }
 	}
 

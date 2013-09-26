@@ -58,48 +58,44 @@ namespace CrossPohod
 			{
 				arg = args[i++].ToLower();
 
-				if ("-u" == arg || "-unlim" == arg)
-					res.Unlimited = true;
-				else if ("-sm" == arg || "-smart" == arg)
-					res.SmartStart = true;
-				else if ("-l" == arg || "-level" == arg)
-				{
-					if (i >= args.Length)
-						throw NoValue(arg);
-					arg = args[i++];
+                if ("-u" == arg || "-unlim" == arg)
+                    res.Unlimited = true;
+                else if ("-sm" == arg || "-smart" == arg)
+                    res.SmartStart = true;
+                else if ("-l" == arg || "-level" == arg)
+                {
+                    if (i >= args.Length)
+                        throw NoValue(arg);
+                    arg = args[i++];
 
-					double l;
-					if (!double.TryParse(arg, out l))
-						throw new CPException("Не могу прочесть уровень квантилей: '{0}'", arg);
+                    double l;
+                    if (!double.TryParse(arg, out l))
+                        throw new CPException("Не могу прочесть уровень квантилей: '{0}'", arg);
 
-					if (l <= 0 || l > 1)
-						throw new CPException("Уровень квантилей вне диапазона (0; 1]", l);
-					res.Level = l;
-				}
-				else if ("-t" == arg || "-transit" == arg)
-				{
-					res.Before = new TimeSpan(0, 3, 0);
-					res.After = new TimeSpan(0, 5, 0);
-					throw new CPException("Ключ -t временно не поддерживается");
-				}
-				else if ("-s" == arg || "-start" == arg)
-				{
-					if (i >= args.Length)
-						throw NoValue(arg);
-					arg = args[i++];
+                    if (l <= 0 || l > 1)
+                        throw new CPException("Уровень квантилей вне диапазона (0; 1]", l);
+                    res.Level = l;
+                }
+                else if ("-i" == arg || "-ignoreTransit" == arg)
+                    res.IgnoreTransit = true;
+                else if ("-s" == arg || "-start" == arg)
+                {
+                    if (i >= args.Length)
+                        throw NoValue(arg);
+                    arg = args[i++];
 
-					if (!TimeSpan.TryParse(arg, out res.Start))
-						throw new CPException("Не могу прочесть время старта: '{0}'", arg);
-				}
-				else if ("-h" == arg || "-help" == arg)
-					throw new PrintSyntaxException();
-				else if (arg.StartsWith("-"))
-					throw new CPException("Неизвестный ключ: '{0}'", arg);
-				else if (i == 3)	// не ключ!
-				{
-					if (!Int32.TryParse(arg, out res.Times) || res.Times <= 0)
-						throw new CPException("Не могу прочесть число повторов: '{0}'", arg);
-				}
+                    if (!TimeSpan.TryParse(arg, out res.Start))
+                        throw new CPException("Не могу прочесть время старта: '{0}'", arg);
+                }
+                else if ("-h" == arg || "-help" == arg)
+                    throw new PrintSyntaxException();
+                else if (arg.StartsWith("-"))
+                    throw new CPException("Неизвестный ключ: '{0}'", arg);
+                else if (i == 3)	// не ключ!
+                {
+                    if (!Int32.TryParse(arg, out res.Times) || res.Times <= 0)
+                        throw new CPException("Не могу прочесть число повторов: '{0}'", arg);
+                }
 			}
 
 			return res;
@@ -180,10 +176,10 @@ namespace CrossPohod
 			Console.WriteLine("crosspohod config.xml out.csv [NNN] [-unlim] [-s h:mm] [-l lev] [-t] [-sm]");
 			Console.WriteLine("\tNNN\tчисло повторений, значение по умолчанию 1");
 			Console.WriteLine("\nSwitches:");
+            Console.WriteLine("\ti ignoreTransit\tне учитывать время на подготовку и сборы до и после тех. этапов");
 			Console.WriteLine("\tl level\tуровень квантилей. Значение по умолчанию 0,95. Например: -l 0,9");
 			Console.WriteLine("\ts start\tначало работы старта 1 дня. Например: -s 6:20");
-			Console.WriteLine("\tsm smart\tхитрый старт второго дня");
-			Console.WriteLine("\tt transit\tдобавлять время на подготовку и сборы до и после тех. этапов");
+			Console.WriteLine("\tsm smart\tхитрый старт второго дня");			
 			Console.WriteLine("\tu unlim\tрежим оценки необходимой пропускной способности");
 		}
 
@@ -223,7 +219,7 @@ namespace CrossPohod
 			int channels = n.Channels > 0 ? n.Channels : 1;
 			foreach (var t in JoinLists(a, b))
 			{
-				n.AddToStart(r, t, start);
+				n.AddTeam(r, t, start);
 				t.SetStart(start);
 
 				i++;
@@ -250,7 +246,7 @@ namespace CrossPohod
 			int channels = n.Channels > 0 ? n.Channels : 1;
 			foreach (var t in JoinLists(a, b))
 			{
-				n.AddToStart(r, t, start);
+				n.AddTeam(r, t, start);
 				t.SetStart(start);
 
 				i++;
@@ -281,7 +277,7 @@ namespace CrossPohod
         public static void AddTeam(Random r, StartNode n, List<Team> teams, DateTime t)
 		{
 			var team = teams.First();
-			n.AddToStart(r, team, t);
+			n.AddTeam(r, team, t);
 			teams.RemoveAt(0);
 
 			team.SetStart(t);

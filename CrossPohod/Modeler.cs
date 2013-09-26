@@ -23,12 +23,6 @@ namespace CrossPohod
 		public Node Node;
         public EventType EType;
 
-        [Obsolete]
-        public CPEvent(Node node, Team team, DateTime time): this(node, team, time, EventType.Leave)
-        { 
-        
-        }
-
 		public CPEvent(Node node, Team team, DateTime time, EventType eType)
 		{
 			Time = time;
@@ -45,6 +39,7 @@ namespace CrossPohod
 		public bool Unlimited = false;
 		public TimeSpan Before = TimeSpan.Zero;
 		public TimeSpan After = TimeSpan.Zero;
+        public bool IgnoreTransit = false;
 	}
 
 	[Serializable]
@@ -80,6 +75,9 @@ namespace CrossPohod
 
 		[XmlIgnore]
 		public bool Unlimited = false;
+        
+        [XmlIgnore]
+        public bool IgnoreTransit = false;
 
 		protected double m_level = 0.95;
 		[XmlIgnore]
@@ -94,8 +92,10 @@ namespace CrossPohod
 			}
 		}
 
+        [Obsolete]
 		[XmlIgnore]
 		public TimeSpan Before = TimeSpan.Zero;
+        [Obsolete]
 		[XmlIgnore]
 		public TimeSpan After = TimeSpan.Zero;
 
@@ -148,13 +148,8 @@ namespace CrossPohod
 				evt = GetEvent();
 				if (evt == null)
 					break;
-				Process(r, evt);
+				evt.Node.ProcessEvent(r, evt);
 			}
-		}
-
-		protected void Process(Random r, CPEvent pe)
-		{
-            pe.Node.ProcessEvent(r, pe, Unlimited);
 		}
 
 		protected CPEvent GetEvent()
@@ -179,7 +174,9 @@ namespace CrossPohod
 
 			m.Level = param.Level;
 			m.Unlimited = param.Unlimited;
-			m.Before = param.Before;
+            m.IgnoreTransit = param.IgnoreTransit;
+			
+            m.Before = param.Before;
 			m.After = param.After;
 
 			m.SetupLinks();
@@ -199,11 +196,8 @@ namespace CrossPohod
 		{
 			Nodes = new Dictionary<string, Node>(Phases.Select(p => NodeFactory.Create(p)).ToDictionary(n => n.Name, n => n));
 
-			foreach(var node in Nodes.Values.Where(n => n.PType == PhaseType.Tech))
-			{
-				node.Before = Before;
-				node.After = After;
-			}
+			foreach(var node in Nodes.Values)
+                node.Setup(Unlimited, IgnoreTransit);                                
 
 			Node src, dest;
 			foreach (var link in Links)
