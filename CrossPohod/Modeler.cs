@@ -37,8 +37,6 @@ namespace CrossPohod
 		public string Source = "source.xml";
 		public double Level = 0.95;
 		public bool Unlimited = false;
-		public TimeSpan Before = TimeSpan.Zero;
-		public TimeSpan After = TimeSpan.Zero;
         public bool IgnoreTransit = false;
 	}
 
@@ -91,13 +89,6 @@ namespace CrossPohod
 				m_level = value;
 			}
 		}
-
-        [Obsolete]
-		[XmlIgnore]
-		public TimeSpan Before = TimeSpan.Zero;
-        [Obsolete]
-		[XmlIgnore]
-		public TimeSpan After = TimeSpan.Zero;
 
 		public void RetrieveTeamStat(int day)
 		{
@@ -176,9 +167,6 @@ namespace CrossPohod
 			m.Unlimited = param.Unlimited;
             m.IgnoreTransit = param.IgnoreTransit;
 			
-            m.Before = param.Before;
-			m.After = param.After;
-
 			m.SetupLinks();
 			return m;
 		}

@@ -121,10 +121,10 @@ namespace CrossPohod
 				FileStream fs = new FileStream(param.Out, FileMode.Create, FileAccess.Write);
 				StreamWriter sw = new StreamWriter(fs);
 
-
+                int quant = 25;
 				for (int i = 0; i < param.Times; i++)
 				{
-					if (i % 10 == 9)
+					if (i % quant == quant-1)
 						Console.WriteLine(i + 1);
 
 					Program.StartDay1(r, mod.Nodes["Старт1"] as StartNode, mod.Teams, DateTime.MinValue + param.Start);
@@ -173,7 +173,7 @@ namespace CrossPohod
 		public static void PrintSyntax()
 		{
 			Console.WriteLine("Syntax:");
-			Console.WriteLine("crosspohod config.xml out.csv [NNN] [-unlim] [-s h:mm] [-l lev] [-t] [-sm]");
+			Console.WriteLine("crosspohod config.xml out.csv [NNN] [-unlim] [-s h:mm] [-l lev] [-i] [-sm]");
 			Console.WriteLine("\tNNN\tчисло повторений, значение по умолчанию 1");
 			Console.WriteLine("\nSwitches:");
             Console.WriteLine("\ti ignoreTransit\tне учитывать время на подготовку и сборы до и после тех. этапов");

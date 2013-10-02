@@ -158,7 +158,7 @@ namespace CrossPohod
 			Links[grade] = phase;
 		}
 
-        public void Setup(bool unlimited, bool ignoreTransit)
+        public virtual void Setup(bool unlimited, bool ignoreTransit)
         {
             bool nonTech = PType != PhaseType.Tech;
 
@@ -173,7 +173,7 @@ namespace CrossPohod
 
         protected bool Unlimited;
 
-		protected List<LogItem> Process = new List<LogItem>();  // Список событий. Пока -- моментов финиша на этапе
+		protected List<LogItem> Process = new List<LogItem>();  // Список событий.
 		protected Queue<LogItem> Wait = new Queue<LogItem>();   // Очередь ожидания отсечки на этапе.
 
 		protected CPEvent m_next = null;                    // ближайшее событие на этапе
@@ -220,7 +220,7 @@ namespace CrossPohod
             UpdateNext();
         }
 
-        private LogItem GetItem(CPEvent evt)
+        protected LogItem GetItem(CPEvent evt)
         {
             var logItem = Process.FirstOrDefault(it => it.evt == evt);
             if (logItem == null)
@@ -263,7 +263,7 @@ namespace CrossPohod
             CheckStart(evt.Time);
             var item = new LogItem(evt);
 
-            item.Before = Scale(Times.Before, item.Team.Smartness);
+            item.Before = Scale(Times.Before, item.Team.Smartness);     // !!!
             evt.EType = EventType.Start;
             evt.Time += item.Before;
             AddItem(item);
@@ -313,7 +313,7 @@ namespace CrossPohod
                 OnStart(r, e);
             }
 
-            item.After = Scale(Times.After, 1.0 * item.Work.TotalMinutes / Times.Mean.TotalMinutes); // как поработали, так и тормозим
+            item.After = Scale(Times.After, 1.0 * item.Work.TotalMinutes / Times.Mean.TotalMinutes); // как поработали, так и тормозим  // !!!
             item.evt.Time += item.After;
             item.evt.EType = EventType.Leave;
             AddItem(item);        
@@ -533,12 +533,22 @@ namespace CrossPohod
             Info.Add(pi);
         }
 
-        public override void ProcessEvent(Random r, CPEvent evt)
+        protected override void OnStart(Random r, LogItem item)
         {
-            CheckStart(evt.Time);
-            var item = new LogItem(evt);
-            LogTeam(item);
-            evt.Team.AddPhase(this, item);
+            base.OnStart(r, item);
+            item.Reject = false;    // на  нет снятий :)
+        }
+
+        protected override void OnLeave(Random r, CPEvent evt)
+        {
+            evt.Team.AddPhase(this, GetItem(evt));
+        }
+
+        public override void Setup(bool unlimited, bool ignoreTransit)
+        {
+            base.Setup(unlimited, ignoreTransit);
+            Times.After = TimeSpan.Zero;
+            Times.Max = TimeSpan.Zero;
         }
 	}
 
