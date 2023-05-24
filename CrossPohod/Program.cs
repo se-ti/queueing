@@ -121,6 +121,9 @@ namespace CrossPohod
 				FileStream fs = new FileStream(param.Out, FileMode.Create, FileAccess.Write);
 				StreamWriter sw = new StreamWriter(fs);
 
+				var bom = new byte[] { 0xEF, 0xBB, 0xBF };
+				sw.BaseStream.Write(bom, 0, bom.Length);
+
                 int quant = 25;
 				for (int i = 0; i < param.Times; i++)
 				{
@@ -131,9 +134,13 @@ namespace CrossPohod
 					mod.Model(r);
 					mod.RetrieveTeamStat(0);
 
-					Program.StartDay2(r, mod.Nodes["Старт2"] as StartNode, mod.Teams, DateTime.MinValue.AddDays(1.25), param.SmartStart);
-					mod.Model(r);
-					mod.RetrieveTeamStat(1);
+					var start2 = "Старт2";
+					if (mod.Nodes.ContainsKey(start2))
+					{
+						Program.StartDay2(r, mod.Nodes[start2] as StartNode, mod.Teams, DateTime.MinValue.AddDays(1.25), param.SmartStart);
+						mod.Model(r);
+						mod.RetrieveTeamStat(1);
+					}
 
 
 					sw.WriteLine(Team.PrintHeader());
