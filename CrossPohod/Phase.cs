@@ -370,7 +370,7 @@ namespace CrossPohod
 
 		public static string PrintHeader(double level)
 		{
-			return "Этап\t" + PhaseStat.PrintHeader(level);
+			return "Этап;" + PhaseStat.PrintHeader(level);
 		}
 
 		public string PrintStat(int n, double level)
@@ -380,8 +380,8 @@ namespace CrossPohod
 
 		protected virtual void DetailStatHead(TextWriter tw, StringBuilder sb)
 		{
-			tw.Write(Name + "\tотсечка");
-			sb.AppendFormat("\tработа");
+			tw.Write(Name + ";отсечка");
+			sb.AppendFormat(";работа");
 		}
 
 		protected void DetailStatBody(TextWriter tw, StringBuilder sb, IEnumerable<Team> teams)
@@ -394,8 +394,8 @@ namespace CrossPohod
 					PrintTeamStat(tw, sb, info);
 				else
 				{
-					tw.Write("\t");
-					sb.Append("\t");
+					tw.Write(";");
+					sb.Append(";");
 				}
 			}
 		}
@@ -413,17 +413,17 @@ namespace CrossPohod
 
 		protected virtual void PrintTeamStat(TextWriter tw, StringBuilder sb, PhaseTeamInfo info)
 		{
-			tw.Write("\t");
+			tw.Write(";");
 			if (info.Wait != TimeSpan.Zero)
 				tw.Write("{0:h\\:mm}", info.Wait);
-			sb.AppendFormat("\t{0:h\\:mm}", info.Time);
+			sb.AppendFormat(";{0:h\\:mm}", info.Time);
 		}
 
 		public static void PrintDetailStatHeader(TextWriter tw, IEnumerable<Team>teams)
 		{
-			tw.Write("\nЭтап\t");
+			tw.Write("\nЭтап;");
 			foreach (var t in teams)
-				tw.Write("\t{0}", t.Name);
+				tw.Write(";{0}", t.Name);
 			tw.WriteLine();
 		}
 
@@ -482,14 +482,14 @@ namespace CrossPohod
 
 		protected override void DetailStatHead(TextWriter tw, StringBuilder sb)
 		{
-			tw.Write(Name + "\tВремя старта");
-			sb.AppendFormat("\tработа");
+			tw.Write(Name + ";Время старта");
+			sb.AppendFormat(";работа");
 		}
 
 		protected override void PrintTeamStat(TextWriter tw, StringBuilder sb, PhaseTeamInfo info)
 		{
-			tw.Write("\t{0:h\\:mm}", info.When.TimeOfDay);
-			sb.AppendFormat("\t{0:h\\:mm}", info.Time);
+			tw.Write(";{0:h\\:mm}", info.When.TimeOfDay);
+			sb.AppendFormat(";{0:h\\:mm}", info.Time);
 		}
 
         protected override void OnStart(Random r, LogItem item)
@@ -505,8 +505,8 @@ namespace CrossPohod
 
 		protected override void DetailStatHead(TextWriter tw, StringBuilder sb)
 		{
-			tw.Write(Name + "\tработа");
-			sb.AppendFormat("\tВремя финиша");
+			tw.Write(Name + ";работа");
+			sb.AppendFormat(";Время финиша");
 		}
 
 		public override void PrintDetailStat(TextWriter tw, IEnumerable<Team> teams)
@@ -517,8 +517,8 @@ namespace CrossPohod
 
 		protected override void PrintTeamStat(TextWriter tw, StringBuilder sb, PhaseTeamInfo info)
 		{
-			tw.Write("\t{0:h\\:mm}", info.Time);
-			sb.AppendFormat("\t{0:h\\:mm}", info.When.TimeOfDay);
+			tw.Write(";{0:h\\:mm}", info.Time);
+			sb.AppendFormat(";{0:h\\:mm}", info.When.TimeOfDay);
 		}
 
         protected override void LogTeam(LogItem item)
@@ -578,7 +578,7 @@ namespace CrossPohod
 
 		public static string PrintHeader(double level)
 		{
-			return String.Format("Команд\tмакс заг\t{0}% макс заг\tзанят с\tс{0}\tпо{0}\tпо\tработа {1}\t отсечек\t{1}\tснятий\tКВ", Convert.ToInt32(level * 100), TimeStat.Header(level));
+			return String.Format("Команд;макс заг;{0}% макс заг;занят с;с{0};по{0};по;работа {1}; отсечек;{1};снятий;КВ", Convert.ToInt32(level * 100), TimeStat.Header(level));
 		}
 		public string PrintStat(string name, int n, double level, TimeSpan max)
 		{
@@ -586,7 +586,7 @@ namespace CrossPohod
 			Stat<PhaseInfo, TimeSpan, long> start = new Stat<PhaseInfo, TimeSpan, long>(PInfo, p => p.Start.TimeOfDay, p => p.Start.Ticks);
 			Stat<PhaseInfo, TimeSpan, long> end   = new Stat<PhaseInfo, TimeSpan, long>(PInfo, p => p.End.TimeOfDay,   p => p.End.Ticks);
 
-            return String.Format("{0}\t{1}\t{2}\t{3}\t{4:h\\:mm}\t{5:h\\:mm}\t{6:h\\:mm}\t{7:h\\:mm}\t{8}\t{9}\t{10}\t{11}\t{12}", name, Teams / n, load.Max(), load.Max(level), start.Min(), start.Min(level), end.Max(level), end.Max(), Time.Print(level), Div(Wait.Num, n), Wait.Print(level), Div(Rejects, n), max != TimeSpan.Zero ? max.ToString(@"h\:mm") : "");
+            return String.Format("{0};{1};{2};{3};{4:h\\:mm};{5:h\\:mm};{6:h\\:mm};{7:h\\:mm};{8};{9};{10};{11};{12}", name, Teams / n, load.Max(), load.Max(level), start.Min(), start.Min(level), end.Max(level), end.Max(), Time.Print(level), Div(Wait.Num, n), Wait.Print(level), Div(Rejects, n), max != TimeSpan.Zero ? max.ToString(@"h\:mm") : "");
 		}
 
 		private static decimal Div(int n, int m)

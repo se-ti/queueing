@@ -85,15 +85,15 @@ namespace CrossPohod
 
 		public static string PrintHeader()
 		{
-			return "Команда\t" + TeamStat.StatHeader(true) + TeamStat.StatHeader(true) + TeamStat.StatHeader(false);
+			return "Команда;" + TeamStat.StatHeader(true) + TeamStat.StatHeader(true) + TeamStat.StatHeader(false);
 		}
 		public string PrintStat()
 		{
 			string stats = "";
 			foreach (var s in m_stat)
-				stats += String.Format("{0}\t", s.ToString(true));
+				stats += String.Format("{0};", s.ToString(true));
 
-			return String.Format("{0}\t{1}{2}", Name, stats, TotalStat.ToString(false));
+			return String.Format("{0};{1}{2}", Name, stats, TotalStat.ToString(false));
 		}
 	}
 
@@ -182,14 +182,14 @@ namespace CrossPohod
 		public static string StatHeader(bool reduced)
 		{
 			return reduced ? 
-				"Cтарт\tРабота\tТранзитка\tОтсечек\tНа отс.\tСнятий\t" :
-				"Работа\tТранзитка\tОтсечек\tНа отс.\tСнятий\tСнятия\tОтсечки\t";
+				"Cтарт;Работа;Транзитка;Отсечек;На отс.;Снятий;" :
+				"Работа;Транзитка;Отсечек;На отс.;Снятий;Снятия;Отсечки;";
 		}
 		public string ToString(bool reduced)
 		{
-			string s = String.Format("{0:h\\:mm}\t{1:h\\:mm}\t{2}\t{3:h\\:mm}\t{4}", Time, Transit, Waits, Wait, Reject);
+			string s = String.Format("{0:h\\:mm};{1:h\\:mm};{2};{3:h\\:mm};{4}", Time, Transit, Waits, Wait, Reject);
 
-			return reduced ? String.Format("{0:h\\:mm}\t{1}", Start.TimeOfDay, s) : String.Format("{0}\t{1}\t{2}", s, RejectComment, WaitComment);
+			return reduced ? String.Format("{0:h\\:mm};{1}", Start.TimeOfDay, s) : String.Format("{0};{1};{2}", s, RejectComment, WaitComment);
 		}
 	}
 }

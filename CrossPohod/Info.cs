@@ -102,16 +102,16 @@ namespace CrossPohod
 
 		public static string Header(double level)
 		{
-			return String.Format("min\tm{0}\tM{0}\tMax\tсредн", Convert.ToInt32(level * 100));
+			return String.Format("min;m{0};M{0};Max;средн", Convert.ToInt32(level * 100));
 		}
 
 		public String Print(double level)
 		{
 			if (Num == 0)
-				return "0\t0\t0\t0\t0";
+				return "0;0;0;0;0";
 
 			Stat<TimeSpan, TimeSpan, long> stat = new Stat<TimeSpan, TimeSpan, long>(all, ts => ts, ts => ts.Ticks);
-            return string.Format("{0:h\\:mm}\t{1:h\\:mm}\t{2:h\\:mm}\t{3:h\\:mm}\t{4}", Min, stat.Min(level), stat.Max(level), Max, Mean);
+            return string.Format("{0:h\\:mm};{1:h\\:mm};{2:h\\:mm};{3:h\\:mm};{4}", Min, stat.Min(level), stat.Max(level), Max, Mean);
 		}
 
 	}
