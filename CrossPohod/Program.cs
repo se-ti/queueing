@@ -190,24 +190,22 @@ namespace CrossPohod
 			Console.WriteLine("\tu unlim\tрежим оценки необходимой пропускной способности");
 		}
 
-		private static List<Team> JoinLists(List<Team> a, List<Team>b)
+		private static IEnumerable<Team> JoinLists(IEnumerable<Team> a, IEnumerable<Team>b)
 		{
-			List<Team> join = new List<Team>();
-			while (a.Any() && b.Any())
+			bool hasA = true;
+			bool hasB = true;
+			var enA = a.GetEnumerator();
+			var enB = b.GetEnumerator();
+			do
 			{
-				join.Add(a.First());
-				join.Add(b.First());
-
-				a.RemoveAt(0);
-				b.RemoveAt(0);
+				hasA = hasA && enA.MoveNext();
+				if (hasA)
+					yield return enA.Current;
+				hasB = hasB && enB.MoveNext();
+				if (hasB)
+					yield return enB.Current;
 			}
-
-			if (a.Any())
-				join.AddRange(a);
-			if (b.Any())
-				join.AddRange(b);
-
-			return join;
+			while (hasA || hasB);
 		}
 
 		public static void StartDay1(Random r, StartNode n, List<Team> teams, DateTime start)
@@ -215,15 +213,13 @@ namespace CrossPohod
             if (n == null)
                 throw new CPException("Не задан стартовый этап второго дня (Старт2)");
 
-			List<Team> a = teams.Where(t => t.Grade >= 2)
-								.OrderBy(t => r.Next())			// shuffle!
-								.ToList();
-			List<Team> b = teams.Where(t => t.Grade < 2)
-								.OrderBy(t => r.Next())
-								.ToList();
+			var a = teams.Where(t => t.Grade >= 2)
+								.OrderBy(t => r.Next());			// shuffle!
+			var b = teams.Where(t => t.Grade < 2)
+								.OrderBy(t => r.Next());
 
 			int i = 0;
-			int channels = n.Channels > 0 ? n.Channels : 1;
+			int channels = Math.Max(n.Channels, 1);
 			foreach (var t in JoinLists(a, b))
 			{
 				n.AddTeam(r, t, start);
@@ -242,15 +238,13 @@ namespace CrossPohod
                 throw new CPException("Не задан стартовый этап второго дня (Старт2)");
 
 			int APlus = 2;
-			List<Team> a = teams.Where(t => t.Grade >= APlus)
-								.OrderBy(t => t.GetStat(0).Work.TotalSeconds)
-								.ToList();
-			List<Team> b = teams.Where(t => t.Grade < APlus)
-								.OrderBy(t => t.GetStat(0).Work.TotalSeconds)
-								.ToList();
+			var a = teams.Where(t => t.Grade >= APlus)
+								.OrderBy(t => t.GetStat(0).Work.TotalSeconds);
+			var b = teams.Where(t => t.Grade < APlus)
+								.OrderBy(t => t.GetStat(0).Work.TotalSeconds);
 
 			int i = 0;
-			int channels = n.Channels > 0 ? n.Channels : 1;
+			int channels = Math.Max(n.Channels, 1);
 			foreach (var t in JoinLists(a, b))
 			{
 				n.AddTeam(r, t, start);
