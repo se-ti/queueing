@@ -219,17 +219,24 @@ namespace CrossPohod
 								.OrderBy(t => r.Next());
 
 			int i = 0;
+			int effChannels;
 			int channels = Math.Max(n.Channels, 1);
+			var grpIdx = 0;
+			var groups = new int[] {  };		// first start groups can be larger than n.Channels, to fill next stages faster
 			foreach (var t in JoinLists(a, b))
 			{
 				n.AddTeam(r, t, start);
 				t.SetStart(start);
 
 				i++;
-				if (i % channels == 0)
+				effChannels = grpIdx < groups.Length ? groups[grpIdx] : channels;
+				if (i % effChannels == 0)
+				{
 					start += n.Times.Max;
+					i = 0;
+					grpIdx++;
+				}
 			}
-
 		}
 
         public static void StartDay2(Random r, StartNode n, List<Team> teams, DateTime start, bool smart)
