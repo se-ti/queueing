@@ -28,7 +28,6 @@ namespace CrossPohod
 		public string Out = "out.csv";
 
 		public int Times = 1;
-		public TimeSpan Start = TimeSpan.MinValue;
 		public bool SmartStart = false;
 
 
@@ -41,7 +40,6 @@ namespace CrossPohod
 			{
 				Times = 1,
 				Unlimited = false,
-				Start = new TimeSpan(6, 0, 0),
 
 				Source = args[0],
 				Out = args[1]
@@ -78,15 +76,6 @@ namespace CrossPohod
                 }
                 else if ("-i" == arg || "-ignoreTransit" == arg)
                     res.IgnoreTransit = true;
-                else if ("-s" == arg || "-start" == arg)
-                {
-                    if (i >= args.Length)
-                        throw NoValue(arg);
-                    arg = args[i++];
-
-                    if (!TimeSpan.TryParse(arg, out res.Start))
-                        throw new CPException("Не могу прочесть время старта: '{0}'", arg);
-                }
                 else if ("-h" == arg || "-help" == arg)
                     throw new PrintSyntaxException();
                 else if (arg.StartsWith("-"))
@@ -130,20 +119,26 @@ namespace CrossPohod
 					if (i % quant == quant-1)
 						Console.WriteLine(i + 1);
 
-					Program.StartDay1(r, mod.Nodes["Старт1"] as StartNode, mod.Teams, DateTime.MinValue + param.Start);
+
+					Program.StartDay1(r, mod.Nodes["Старт1"] as StartNode, mod.Teams.Where(t => t.Grade >= 2).ToList(), new[] { 4 } );
+					Program.StartDay1(r, mod.Nodes["Старт1Б"] as StartNode, mod.Teams.Where(t => t.Grade < 2).ToList());
+
+
 					mod.Model(r);
 					mod.RetrieveTeamStat(0);
 
+					var days = 1;
 					var start2 = "Старт2";
 					if (mod.Nodes.ContainsKey(start2))
 					{
+						days++;
 						Program.StartDay2(r, mod.Nodes[start2] as StartNode, mod.Teams, DateTime.MinValue.AddDays(1.25), param.SmartStart);
 						mod.Model(r);
 						mod.RetrieveTeamStat(1);
 					}
 
 
-					sw.WriteLine(Team.PrintHeader());
+					sw.WriteLine(Team.PrintHeader(days));
 					foreach (var t in mod.Teams.OrderBy(tm => tm.Grade).ThenBy(tm => tm.GetStat(0).Start))
 					{
 						sw.WriteLine(t.PrintStat());
@@ -163,14 +158,17 @@ namespace CrossPohod
 			{
 				Console.WriteLine("Error:\n{0}\n", cp.Message);
 				PrintSyntax();
+				Environment.ExitCode = 2;
 			}
 			catch (PrintSyntaxException)
 			{
 				PrintSyntax();
+				Environment.ExitCode = 1;
 			}
 			catch (Exception e)
 			{
 				Console.WriteLine("Error:\n{0}\n {1}\n", e.Message, e.StackTrace);
+				Environment.ExitCode = 3;
 			}
 
 			Console.Write("Press any key...");
@@ -180,12 +178,11 @@ namespace CrossPohod
 		public static void PrintSyntax()
 		{
 			Console.WriteLine("Syntax:");
-			Console.WriteLine("crosspohod config.xml out.csv [NNN] [-unlim] [-s h:mm] [-l lev] [-i] [-sm]");
+			Console.WriteLine("crosspohod config.xml out.csv [NNN] [-unlim] [-l lev] [-i] [-sm]");
 			Console.WriteLine("\tNNN\tчисло повторений, значение по умолчанию 1");
 			Console.WriteLine("\nSwitches:");
             Console.WriteLine("\ti ignoreTransit\tне учитывать время на подготовку и сборы до и после тех. этапов");
 			Console.WriteLine("\tl level\tуровень квантилей. Значение по умолчанию 0,95. Например: -l 0,9");
-			Console.WriteLine("\ts start\tначало работы старта 1 дня. Например: -s 6:20");
 			Console.WriteLine("\tsm smart\tхитрый старт второго дня");			
 			Console.WriteLine("\tu unlim\tрежим оценки необходимой пропускной способности");
 		}
@@ -208,7 +205,7 @@ namespace CrossPohod
 			while (hasA || hasB);
 		}
 
-		public static void StartDay1(Random r, StartNode n, List<Team> teams, DateTime start)
+		public static void StartDay1(Random r, StartNode n, List<Team> teams, int[] groups = null)
 		{
             if (n == null)
                 throw new CPException("Не задан стартовый этап второго дня (Старт2)");
@@ -218,11 +215,12 @@ namespace CrossPohod
 			var b = teams.Where(t => t.Grade < 2)
 								.OrderBy(t => r.Next());
 
+			DateTime start = DateTime.MinValue + n.Times.Open;
 			int i = 0;
 			int effChannels;
 			int channels = Math.Max(n.Channels, 1);
 			var grpIdx = 0;
-			var groups = new int[] {  };		// first start groups can be larger than n.Channels, to fill next stages faster
+			groups = groups ?? new int[] { };        // first start groups can be larger than n.Channels, to fill next stages faster
 			foreach (var t in JoinLists(a, b))
 			{
 				n.AddTeam(r, t, start);

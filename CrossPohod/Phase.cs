@@ -36,6 +36,9 @@ namespace CrossPohod
         [XmlIgnore]
         public TimeSpan After;
 
+		[XmlIgnore]
+		public TimeSpan Open;
+
 
 		[XmlAttribute("Min")]
 		public int XmlMin
@@ -72,6 +75,13 @@ namespace CrossPohod
             set { After = new TimeSpan(0, value, 0); }
         }
 
+		[XmlAttribute("Open")]
+		public int XmlOpen
+		{
+			get { return Convert.ToInt32(Open.TotalMinutes); }
+			set { Open = new TimeSpan(0, value, 0); }
+		}
+
 		public PhaseParam()
 		{
 			Min = TimeSpan.Zero;
@@ -80,6 +90,7 @@ namespace CrossPohod
 			Sigma = 0.2;
             Before = TimeSpan.Zero;
             After = TimeSpan.Zero;
+			Open = TimeSpan.Zero;
 		}
 	}
 
@@ -578,7 +589,7 @@ namespace CrossPohod
 
 		public static string PrintHeader(double level)
 		{
-			return String.Format("Команд;макс заг;{0}% макс заг;занят с;с{0};по{0};по;работа {1}; отсечек;{1};снятий;КВ", Convert.ToInt32(level * 100), TimeStat.Header(level));
+			return String.Format("Команд;макс заг;{0}% макс заг;занят с;с {0};по {0};по;работа {1}; отсечек;{1};снятий;КВ", Convert.ToInt32(level * 100), TimeStat.Header(level));
 		}
 		public string PrintStat(string name, int n, double level, TimeSpan max)
 		{

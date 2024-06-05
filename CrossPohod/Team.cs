@@ -83,9 +83,14 @@ namespace CrossPohod
 			Start = time;
 		}
 
-		public static string PrintHeader()
+		public static string PrintHeader(int days)
 		{
-			return "Команда;" + TeamStat.StatHeader(true) + TeamStat.StatHeader(true) + TeamStat.StatHeader(false);
+			var day = TeamStat.StatHeader(true);
+			var dayHeaders = "";
+			for (int i = 0; i < days; i++)
+				dayHeaders += day;
+
+			return "Команда;" + dayHeaders + TeamStat.StatHeader(false);
 		}
 		public string PrintStat()
 		{
